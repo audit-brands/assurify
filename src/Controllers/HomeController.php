@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Services\StoryService;
+use App\Services\FeedService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use League\Plates\Engine;
@@ -13,7 +14,8 @@ class HomeController extends BaseController
 {
     public function __construct(
         Engine $templates,
-        private StoryService $storyService
+        private StoryService $storyService,
+        private FeedService $feedService
     ) {
         parent::__construct($templates);
     }
@@ -62,28 +64,15 @@ class HomeController extends BaseController
         ]);
     }
 
-    public function search(Request $request, Response $response): Response
-    {
-        $query = $request->getQueryParams()['q'] ?? '';
-        $results = [];
-
-        // TODO: Implement search functionality in Phase 5
-        if (!empty($query)) {
-            // Placeholder search - will be implemented in Phase 5
-            $results = [];
-        }
-
-        return $this->render($response, 'search/index', [
-            'title' => 'Search | Lobsters',
-            'query' => $query,
-            'results' => $results
-        ]);
-    }
 
     public function storiesFeed(Request $request, Response $response): Response
     {
-        // TODO: Implement RSS feed in Phase 5
-        $response->getBody()->write('<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>Lobsters</title></channel></rss>');
-        return $response->withHeader('Content-Type', 'application/rss+xml');
+        $queryParams = $request->getQueryParams();
+        $tag = $queryParams['tag'] ?? null;
+        
+        $rssContent = $this->feedService->generateStoriesFeed($tag);
+        
+        $response->getBody()->write($rssContent);
+        return $response->withHeader('Content-Type', 'application/rss+xml; charset=utf-8');
     }
 }

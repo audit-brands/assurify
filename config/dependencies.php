@@ -14,6 +14,9 @@ use App\Services\InvitationService;
 use App\Services\StoryService;
 use App\Services\TagService;
 use App\Services\CommentService;
+use App\Services\SearchService;
+use App\Services\FeedService;
+use App\Services\ModerationService;
 
 return [
     // Database
@@ -96,5 +99,17 @@ return [
 
     CommentService::class => function () {
         return new CommentService();
+    },
+
+    SearchService::class => function () {
+        return new SearchService();
+    },
+
+    FeedService::class => function () {
+        return new FeedService();
+    },
+
+    ModerationService::class => function () {
+        return new ModerationService();
     },
 ];

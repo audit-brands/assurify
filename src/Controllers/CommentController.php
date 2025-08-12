@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Services\CommentService;
+use App\Services\FeedService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use League\Plates\Engine;
@@ -13,7 +14,8 @@ class CommentController extends BaseController
 {
     public function __construct(
         Engine $templates,
-        private CommentService $commentService
+        private CommentService $commentService,
+        private FeedService $feedService
     ) {
         parent::__construct($templates);
     }
@@ -178,8 +180,9 @@ class CommentController extends BaseController
 
     public function commentsFeed(Request $request, Response $response): Response
     {
-        // TODO: Implement RSS feed in Phase 5
-        $response->getBody()->write('<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>Lobsters Comments</title></channel></rss>');
-        return $response->withHeader('Content-Type', 'application/rss+xml');
+        $rssContent = $this->feedService->generateCommentsFeed();
+        
+        $response->getBody()->write($rssContent);
+        return $response->withHeader('Content-Type', 'application/rss+xml; charset=utf-8');
     }
 }

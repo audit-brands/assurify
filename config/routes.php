@@ -9,6 +9,8 @@ use App\Controllers\UserController;
 use App\Controllers\AuthController;
 use App\Controllers\TagController;
 use App\Controllers\InvitationController;
+use App\Controllers\SearchController;
+use App\Controllers\ModerationController;
 use Slim\App;
 use Slim\Routing\RouteCollectorProxy;
 
@@ -68,8 +70,22 @@ $app->group('/invitations', function (RouteCollectorProxy $group) {
 });
 
 // Search
-$app->get('/search', [HomeController::class, 'search']);
+$app->get('/search', [SearchController::class, 'index']);
+$app->get('/search/autocomplete', [SearchController::class, 'autocomplete']);
 
 // Feeds
 $app->get('/feeds/stories.rss', [HomeController::class, 'storiesFeed']);
 $app->get('/feeds/comments.rss', [CommentController::class, 'commentsFeed']);
+$app->get('/t/{tag}/rss', [TagController::class, 'feed']);
+$app->get('/u/{username}/rss', [UserController::class, 'feed']);
+
+// Moderation routes
+$app->group('/moderation', function (RouteCollectorProxy $group) {
+    $group->get('', [ModerationController::class, 'dashboard']);
+    $group->get('/flagged', [ModerationController::class, 'flaggedContent']);
+    $group->get('/log', [ModerationController::class, 'moderationLog']);
+    $group->post('/stories/{id}', [ModerationController::class, 'moderateStory']);
+    $group->post('/comments/{id}', [ModerationController::class, 'moderateComment']);
+    $group->post('/users/{id}/ban', [ModerationController::class, 'banUser']);
+    $group->post('/users/{id}/unban', [ModerationController::class, 'unbanUser']);
+});

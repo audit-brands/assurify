@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" href="/assets/application.css">
     <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="alternate" type="application/rss+xml" title="Lobsters - Stories" href="/feeds/stories.rss">
+    <link rel="alternate" type="application/rss+xml" title="Lobsters - Comments" href="/feeds/comments.rss">
 </head>
 <body>
     <div id="wrapper">
