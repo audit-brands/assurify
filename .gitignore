@@ -21,10 +21,21 @@ yarn.lock
 # vendored
 node_modules/
 vendor/bundle
+/vendor/
+composer.lock
 
 # compiled output
 coverage/
 public/assets
+
+# PHP/Slim specific
+.env
+.env.local
+.env.*.local
+/logs/
+*.log
+/cache/
+.phpunit.result.cache
 
 # cache
 public/avatars
