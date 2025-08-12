@@ -4,8 +4,38 @@
     <meta charset="utf-8">
     <title><?=$this->e($title ?? 'Lobsters')?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="/assets/application.css">
+    <meta name="description" content="A community for programmers and technologists to share and discuss interesting links and stories">
+    <meta name="theme-color" content="#ff6600">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Lobsters">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Favicons and App Icons -->
     <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" href="/assets/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/assets/icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="/assets/icons/icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="/assets/icons/icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="/assets/icons/icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="/assets/icons/icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/assets/icons/icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="/assets/icons/icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="57x57" href="/assets/icons/icon-57x57.png">
+    
+    <!-- Microsoft Tiles -->
+    <meta name="msapplication-TileImage" content="/assets/icons/icon-144x144.png">
+    <meta name="msapplication-TileColor" content="#ff6600">
+    <meta name="msapplication-config" content="/browserconfig.xml">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" type="text/css" href="/assets/application.css">
+    
+    <!-- RSS Feeds -->
     <link rel="alternate" type="application/rss+xml" title="Lobsters - Stories" href="/feeds/stories.rss">
     <link rel="alternate" type="application/rss+xml" title="Lobsters - Comments" href="/feeds/comments.rss">
 </head>
@@ -51,5 +81,49 @@
     </div>
 
     <script src="/assets/application.js"></script>
+    <script src="/assets/pwa.js"></script>
+    <script src="/assets/websocket.js"></script>
+    
+    <!-- PWA initialization -->
+    <script>
+        // Basic offline handling
+        window.addEventListener('load', function() {
+            // Update UI based on connection status
+            function updateOfflineStatus() {
+                document.body.classList.toggle('offline', !navigator.onLine);
+            }
+            
+            window.addEventListener('online', updateOfflineStatus);
+            window.addEventListener('offline', updateOfflineStatus);
+            updateOfflineStatus();
+        });
+        
+        // Handle form submissions when offline
+        document.addEventListener('submit', function(event) {
+            if (!navigator.onLine) {
+                event.preventDefault();
+                alert('You are currently offline. This action will be performed when you reconnect.');
+                
+                // Store offline action for later sync
+                const formData = new FormData(event.target);
+                const offlineAction = {
+                    url: event.target.action,
+                    method: event.target.method,
+                    data: Object.fromEntries(formData),
+                    timestamp: Date.now()
+                };
+                
+                // Store in localStorage for sync later
+                const offlineActions = JSON.parse(localStorage.getItem('offlineActions') || '[]');
+                offlineActions.push(offlineAction);
+                localStorage.setItem('offlineActions', JSON.stringify(offlineActions));
+                
+                // Trigger background sync event
+                window.dispatchEvent(new CustomEvent('offline-action', {
+                    detail: { tag: 'background-sync-stories' }
+                }));
+            }
+        });
+    </script>
 </body>
 </html>

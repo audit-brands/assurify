@@ -23,6 +23,7 @@ use App\Services\AdminService;
 use App\Services\LoggerService;
 use App\Services\RateLimitService;
 use App\Services\JwtService;
+use App\Services\PushNotificationService;
 
 return [
     // Database
@@ -147,5 +148,9 @@ return [
 
     JwtService::class => function () {
         return new JwtService();
+    },
+
+    PushNotificationService::class => function () {
+        return new PushNotificationService();
     },
 ];

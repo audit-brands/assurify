@@ -16,6 +16,7 @@ use App\Controllers\Api\AuthApiController;
 use App\Controllers\Api\StoriesApiController;
 use App\Controllers\Api\V2\StoriesApiController as V2StoriesApiController;
 use App\Controllers\Api\DocsController;
+use App\Controllers\Api\PushController;
 use App\Middleware\ApiAuthMiddleware;
 use App\Middleware\ApiVersionMiddleware;
 use Slim\App;
@@ -146,6 +147,12 @@ $app->group('/api/v1', function (RouteCollectorProxy $group) {
         $group->delete('/stories/{id}', [StoriesApiController::class, 'delete']);
         $group->post('/stories/{id}/vote', [StoriesApiController::class, 'vote']);
         
+        // Push notification endpoints
+        $group->post('/push/subscribe', [PushController::class, 'subscribe']);
+        $group->post('/push/unsubscribe', [PushController::class, 'unsubscribe']);
+        $group->get('/push/subscriptions', [PushController::class, 'getUserSubscriptions']);
+        $group->post('/push/test', [PushController::class, 'sendTestNotification']);
+        
     })->add(ApiAuthMiddleware::class);
 })->add(ApiVersionMiddleware::class);
 
@@ -156,6 +163,9 @@ $app->group('/api/v2', function (RouteCollectorProxy $group) {
     $group->post('/auth/register', [AuthApiController::class, 'register']);
     $group->post('/auth/refresh', [AuthApiController::class, 'refresh']);
     $group->get('/auth/scopes', [AuthApiController::class, 'getAvailableScopes']);
+    
+    // Public push notification endpoints
+    $group->get('/push/public-key', [PushController::class, 'getPublicKey']);
     
     // Enhanced stories endpoints with v2 features
     $group->get('/stories', [V2StoriesApiController::class, 'index']);
