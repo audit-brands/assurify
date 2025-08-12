@@ -54,7 +54,11 @@ class ModelTest extends TestCase
             'post_reply_notifications',
             'theme',
             'session_token',
-            'password_reset_token'
+            'password_reset_token',
+            'banned_at',
+            'banned_reason',
+            'deleted',
+            'disabled_invites'
         ];
 
         $this->assertEquals($expected, $user->getFillable());

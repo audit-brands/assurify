@@ -31,7 +31,11 @@ class User extends Model
         'post_reply_notifications',
         'theme',
         'session_token',
-        'password_reset_token'
+        'password_reset_token',
+        'banned_at',
+        'banned_reason',
+        'deleted',
+        'disabled_invites'
     ];
 
     protected $hidden = [
@@ -52,7 +56,10 @@ class User extends Model
         'show_submit_tagging_hints' => 'boolean',
         'show_read_ribbons' => 'boolean',
         'hide_dragons' => 'boolean',
-        'post_reply_notifications' => 'boolean'
+        'post_reply_notifications' => 'boolean',
+        'banned_at' => 'datetime',
+        'deleted' => 'boolean',
+        'disabled_invites' => 'boolean'
     ];
 
     public function stories(): HasMany

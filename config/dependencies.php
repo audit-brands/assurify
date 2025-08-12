@@ -8,6 +8,9 @@ use League\Plates\Engine;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use Psr\Log\LoggerInterface;
+use App\Services\AuthService;
+use App\Services\EmailService;
+use App\Services\InvitationService;
 
 return [
     // Database
@@ -45,5 +48,18 @@ return [
         $handler = new StreamHandler(__DIR__ . '/../logs/app.log', Logger::DEBUG);
         $logger->pushHandler($handler);
         return $logger;
+    },
+
+    // Services
+    AuthService::class => function () {
+        return new AuthService();
+    },
+
+    EmailService::class => function () {
+        return new EmailService();
+    },
+
+    InvitationService::class => function (Container $c) {
+        return new InvitationService($c->get(EmailService::class));
     },
 ];

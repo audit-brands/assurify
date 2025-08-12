@@ -25,9 +25,16 @@
                     </ul>
                 </nav>
                 <div id="user-nav">
-                    <!-- TODO: Add authentication links -->
-                    <a href="/auth/login">Login</a> |
-                    <a href="/auth/signup">Sign up</a>
+                    <?php if (isset($_SESSION['user_id'])) : ?>
+                        <span>Welcome, <a href="/u/<?=$_SESSION['username']?>"><?=$this->e($_SESSION['username'])?></a></span>
+                        <a href="/invitations">Invitations</a> |
+                        <form action="/auth/logout" method="post" style="display: inline;">
+                            <button type="submit" class="link-button">Logout</button>
+                        </form>
+                    <?php else : ?>
+                        <a href="/auth/login">Login</a> |
+                        <a href="/auth/signup">Sign up</a>
+                    <?php endif ?>
                 </div>
             </div>
         </header>

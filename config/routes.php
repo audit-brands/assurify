@@ -8,6 +8,7 @@ use App\Controllers\CommentController;
 use App\Controllers\UserController;
 use App\Controllers\AuthController;
 use App\Controllers\TagController;
+use App\Controllers\InvitationController;
 use Slim\App;
 use Slim\Routing\RouteCollectorProxy;
 
@@ -47,6 +48,19 @@ $app->group('/auth', function (RouteCollectorProxy $group) {
     $group->post('/logout', [AuthController::class, 'logout']);
     $group->get('/signup', [AuthController::class, 'signupForm']);
     $group->post('/signup', [AuthController::class, 'signup']);
+    $group->get('/forgot-password', [AuthController::class, 'forgotPasswordForm']);
+    $group->post('/forgot-password', [AuthController::class, 'sendPasswordReset']);
+});
+
+// Signup routes
+$app->get('/signup/invited', [AuthController::class, 'invitedSignupForm']);
+
+// Invitation routes  
+$app->group('/invitations', function (RouteCollectorProxy $group) {
+    $group->get('', [InvitationController::class, 'index']);
+    $group->get('/create', [InvitationController::class, 'create']);
+    $group->post('', [InvitationController::class, 'store']);
+    $group->get('/tree', [InvitationController::class, 'tree']);
 });
 
 // Search

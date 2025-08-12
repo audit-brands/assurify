@@ -5,6 +5,12 @@ $this->layout('layout', ['title' => $title]) ?>
 <div class="auth-form">
     <h1>Login</h1>
     
+    <?php if ($error) : ?>
+        <div class="error-message">
+            <?=$this->e($error)?>
+        </div>
+    <?php endif ?>
+    
     <form action="/auth/login" method="post">
         <div class="form-group">
             <label for="username">Username or Email:</label>
