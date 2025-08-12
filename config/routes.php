@@ -11,6 +11,7 @@ use App\Controllers\TagController;
 use App\Controllers\InvitationController;
 use App\Controllers\SearchController;
 use App\Controllers\ModerationController;
+use App\Controllers\AdminController;
 use Slim\App;
 use Slim\Routing\RouteCollectorProxy;
 
@@ -89,3 +90,23 @@ $app->group('/moderation', function (RouteCollectorProxy $group) {
     $group->post('/users/{id}/ban', [ModerationController::class, 'banUser']);
     $group->post('/users/{id}/unban', [ModerationController::class, 'unbanUser']);
 });
+
+// Admin routes
+$app->group('/admin', function (RouteCollectorProxy $group) {
+    $group->get('', [AdminController::class, 'dashboard']);
+    $group->get('/performance', [AdminController::class, 'performance']);
+    $group->get('/cache', [AdminController::class, 'cache']);
+    $group->get('/users', [AdminController::class, 'users']);
+    $group->get('/settings', [AdminController::class, 'settings']);
+    $group->get('/logs', [AdminController::class, 'logs']);
+    
+    // Admin API endpoints
+    $group->post('/flush-cache', [AdminController::class, 'flushCache']);
+    $group->post('/cleanup', [AdminController::class, 'cleanupSystem']);
+    $group->get('/export', [AdminController::class, 'exportData']);
+    $group->get('/metrics', [AdminController::class, 'metricsApi']);
+    $group->get('/system-info', [AdminController::class, 'systemInfo']);
+});
+
+// Health check endpoint (public)
+$app->get('/health', [AdminController::class, 'healthCheck']);

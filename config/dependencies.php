@@ -17,6 +17,11 @@ use App\Services\CommentService;
 use App\Services\SearchService;
 use App\Services\FeedService;
 use App\Services\ModerationService;
+use App\Services\CacheService;
+use App\Services\PerformanceService;
+use App\Services\AdminService;
+use App\Services\LoggerService;
+use App\Services\RateLimitService;
 
 return [
     // Database
@@ -111,5 +116,31 @@ return [
 
     ModerationService::class => function () {
         return new ModerationService();
+    },
+
+    CacheService::class => function () {
+        return new CacheService();
+    },
+
+    PerformanceService::class => function () {
+        return new PerformanceService();
+    },
+
+    LoggerService::class => function () {
+        return new LoggerService();
+    },
+
+    RateLimitService::class => function (Container $c) {
+        return new RateLimitService(
+            $c->get(CacheService::class),
+            $c->get(LoggerService::class)
+        );
+    },
+
+    AdminService::class => function (Container $c) {
+        return new AdminService(
+            $c->get(PerformanceService::class),
+            $c->get(CacheService::class)
+        );
     },
 ];
