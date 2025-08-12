@@ -58,12 +58,36 @@ $this->layout('layout', ['title' => $title]) ?>
         <?php endif ?>
     </div>
     
-    <div class="comments-section">
-        <h3>Comments</h3>
-        <?php if (empty($comments)) : ?>
-            <p>No comments yet.</p>
+    <div class="comments-section" id="comments">
+        <h3>Comments (<?=$total_comments ?? 0?>)</h3>
+        
+        <?php if (isset($_SESSION['user_id'])) : ?>
+            <div class="comment-form-container">
+                <h4>Add a comment</h4>
+                <form class="comment-form" data-story-id="<?=$story['id']?>">
+                    <div class="form-group">
+                        <textarea name="comment" placeholder="Write a comment..." rows="5" required></textarea>
+                        <small>Supports Markdown formatting</small>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit">Post Comment</button>
+                    </div>
+                </form>
+            </div>
         <?php else : ?>
-            <!-- TODO: Display comments in Phase 4 -->
+            <div class="login-prompt">
+                <p><a href="/auth/login">Log in</a> to post a comment.</p>
+            </div>
         <?php endif ?>
+        
+        <div class="comments-list">
+            <?php if (empty($comments)) : ?>
+                <p class="no-comments">No comments yet. Be the first to comment!</p>
+            <?php else : ?>
+                <?php foreach ($comments as $comment) : ?>
+                    <?=$this->insert('comments/_comment', ['comment' => $comment])?>
+                <?php endforeach ?>
+            <?php endif ?>
+        </div>
     </div>
 </div>

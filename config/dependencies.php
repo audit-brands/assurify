@@ -13,6 +13,7 @@ use App\Services\EmailService;
 use App\Services\InvitationService;
 use App\Services\StoryService;
 use App\Services\TagService;
+use App\Services\CommentService;
 
 return [
     // Database
@@ -91,5 +92,9 @@ return [
 
     StoryService::class => function (Container $c) {
         return new StoryService($c->get(TagService::class));
+    },
+
+    CommentService::class => function () {
+        return new CommentService();
     },
 ];

@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Services\StoryService;
 use App\Services\TagService;
+use App\Services\CommentService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use League\Plates\Engine;
@@ -15,7 +16,8 @@ class StoryController extends BaseController
     public function __construct(
         Engine $templates,
         private StoryService $storyService,
-        private TagService $tagService
+        private TagService $tagService,
+        private CommentService $commentService
     ) {
         parent::__construct($templates);
     }
@@ -33,11 +35,16 @@ class StoryController extends BaseController
         }
 
         $storyData = $this->storyService->formatStoriesForView(collect([$story]))[0];
+        
+        // Load comments for this story
+        $comments = $this->commentService->getCommentsForStory($story);
+        $commentTree = $this->commentService->buildCommentTree($comments);
 
         return $this->render($response, 'stories/show', [
             'title' => $story->title . ' | Lobsters',
             'story' => $storyData,
-            'comments' => [] // TODO: Load comments in Phase 4
+            'comments' => $commentTree,
+            'total_comments' => count($comments)
         ]);
     }
 

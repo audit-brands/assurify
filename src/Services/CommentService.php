@@ -1,0 +1,316 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services;
+
+use App\Models\Comment;
+use App\Models\Story;
+use App\Models\User;
+use App\Models\Vote;
+use Illuminate\Support\Carbon;
+use Michelf\Markdown;
+
+class CommentService
+{
+    public function generateShortId(): string
+    {
+        // Generate a unique 10-character alphanumeric ID
+        $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        do {
+            $shortId = '';
+            for ($i = 0; $i < 10; $i++) {
+                $shortId .= $chars[random_int(0, strlen($chars) - 1)];
+            }
+        } while (Comment::where('short_id', $shortId)->exists());
+
+        return $shortId;
+    }
+
+    public function createComment(User $user, Story $story, array $data): Comment
+    {
+        // Validate input
+        $this->validateCommentData($data);
+
+        // Create comment
+        $comment = new Comment();
+        $comment->user_id = $user->id;
+        $comment->story_id = $story->id;
+        $comment->parent_comment_id = $data['parent_comment_id'] ?? null;
+        $comment->comment = trim($data['comment']);
+        $comment->short_id = $this->generateShortId();
+        $comment->score = 1; // Initial score from submitter
+        $comment->upvotes = 1;
+        $comment->downvotes = 0;
+
+        // Process markdown for comment
+        if ($comment->comment) {
+            $comment->markeddown_comment = Markdown::defaultTransform($comment->comment);
+        }
+
+        // Set thread_id for threading
+        if ($comment->parent_comment_id) {
+            $parentComment = Comment::find($comment->parent_comment_id);
+            $comment->thread_id = $parentComment->thread_id ?: $parentComment->short_id;
+        } else {
+            $comment->thread_id = null; // Top-level comment
+        }
+
+        $comment->save();
+
+        // Add submitter's upvote
+        $this->castVote($comment, $user, 1);
+
+        // Update story comment count
+        $this->updateStoryCommentCount($story);
+
+        return $comment;
+    }
+
+    public function getCommentsForStory(Story $story, string $sort = 'confidence', int $limit = 100): array
+    {
+        try {
+            $query = Comment::where('story_id', $story->id)
+                           ->where('is_deleted', false)
+                           ->where('is_moderated', false)
+                           ->with(['user', 'votes']);
+
+            switch ($sort) {
+                case 'newest':
+                    $query->orderBy('created_at', 'desc');
+                    break;
+                case 'oldest':
+                    $query->orderBy('created_at', 'asc');
+                    break;
+                case 'score':
+                    $query->orderBy('score', 'desc')
+                          ->orderBy('created_at', 'asc');
+                    break;
+                case 'confidence':
+                default:
+                    $query->orderBy('confidence', 'desc')
+                          ->orderBy('created_at', 'asc');
+                    break;
+            }
+
+            $comments = $query->take($limit)->get();
+
+            return $this->formatCommentsForView($comments);
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    public function buildCommentTree(array $comments): array
+    {
+        $tree = [];
+        $lookup = [];
+
+        // First pass: create lookup table
+        foreach ($comments as $comment) {
+            $lookup[$comment['id']] = $comment;
+            $lookup[$comment['id']]['replies'] = [];
+        }
+
+        // Second pass: build tree structure
+        foreach ($comments as $comment) {
+            if ($comment['parent_comment_id']) {
+                if (isset($lookup[$comment['parent_comment_id']])) {
+                    $lookup[$comment['parent_comment_id']]['replies'][] = &$lookup[$comment['id']];
+                }
+            } else {
+                $tree[] = &$lookup[$comment['id']];
+            }
+        }
+
+        return $tree;
+    }
+
+    public function formatCommentsForView($comments): array
+    {
+        return $comments->map(function ($comment) {
+            return [
+                'id' => $comment->id,
+                'short_id' => $comment->short_id,
+                'comment' => $comment->comment,
+                'markeddown_comment' => $comment->markeddown_comment,
+                'score' => $comment->score,
+                'upvotes' => $comment->upvotes,
+                'downvotes' => $comment->downvotes,
+                'confidence' => $comment->confidence,
+                'parent_comment_id' => $comment->parent_comment_id,
+                'thread_id' => $comment->thread_id,
+                'username' => $comment->user->username,
+                'user_id' => $comment->user_id,
+                'story_id' => $comment->story_id,
+                'is_deleted' => $comment->is_deleted,
+                'is_moderated' => $comment->is_moderated,
+                'created_at' => $comment->created_at,
+                'time_ago' => $this->timeAgo($comment->created_at),
+                'created_at_formatted' => $comment->created_at->format('Y-m-d H:i:s'),
+            ];
+        })->toArray();
+    }
+
+    public function castVote(Comment $comment, User $user, int $vote): bool
+    {
+        if ($vote !== 1 && $vote !== -1) {
+            throw new \InvalidArgumentException('Vote must be 1 or -1');
+        }
+
+        // Check if user has already voted
+        $existingVote = Vote::where('comment_id', $comment->id)
+                          ->where('user_id', $user->id)
+                          ->first();
+
+        if ($existingVote) {
+            if ($existingVote->vote === $vote) {
+                // Same vote - remove it
+                $this->removeVote($comment, $existingVote);
+                return false;
+            } else {
+                // Different vote - update it
+                $this->updateVote($comment, $existingVote, $vote);
+                return true;
+            }
+        } else {
+            // New vote
+            $this->addVote($comment, $user, $vote);
+            return true;
+        }
+    }
+
+    private function addVote(Comment $comment, User $user, int $vote): void
+    {
+        $voteRecord = new Vote();
+        $voteRecord->user_id = $user->id;
+        $voteRecord->comment_id = $comment->id;
+        $voteRecord->vote = $vote;
+        $voteRecord->save();
+
+        $this->updateCommentScore($comment);
+    }
+
+    private function updateVote(Comment $comment, Vote $existingVote, int $vote): void
+    {
+        $existingVote->vote = $vote;
+        $existingVote->save();
+
+        $this->updateCommentScore($comment);
+    }
+
+    private function removeVote(Comment $comment, Vote $existingVote): void
+    {
+        $existingVote->delete();
+        $this->updateCommentScore($comment);
+    }
+
+    private function updateCommentScore(Comment $comment): void
+    {
+        $votes = Vote::where('comment_id', $comment->id)->get();
+
+        $upvotes = $votes->where('vote', 1)->count();
+        $downvotes = $votes->where('vote', -1)->count();
+        $score = $upvotes - $downvotes;
+
+        $comment->upvotes = $upvotes;
+        $comment->downvotes = $downvotes;
+        $comment->score = $score;
+        
+        // Calculate confidence score (Wilson score interval)
+        $comment->confidence = $this->calculateConfidence($upvotes, $downvotes);
+        
+        $comment->save();
+    }
+
+    private function calculateConfidence(int $upvotes, int $downvotes): float
+    {
+        $total = $upvotes + $downvotes;
+        
+        if ($total === 0) {
+            return 0.0;
+        }
+
+        $z = 1.96; // 95% confidence interval
+        $p = $upvotes / $total;
+        
+        return ($p + $z * $z / (2 * $total) - $z * sqrt(($p * (1 - $p) + $z * $z / (4 * $total)) / $total)) / (1 + $z * $z / $total);
+    }
+
+    private function updateStoryCommentCount(Story $story): void
+    {
+        $count = Comment::where('story_id', $story->id)
+                       ->where('is_deleted', false)
+                       ->where('is_moderated', false)
+                       ->count();
+
+        $story->comments_count = $count;
+        $story->save();
+    }
+
+    public function timeAgo(Carbon $date): string
+    {
+        return $date->diffForHumans();
+    }
+
+    public function getCommentByShortId(string $shortId): ?Comment
+    {
+        try {
+            return Comment::where('short_id', $shortId)
+                         ->with(['user', 'story', 'votes'])
+                         ->first();
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    public function deleteComment(Comment $comment, User $user): bool
+    {
+        // Only comment author, moderators, or admins can delete
+        if ($comment->user_id !== $user->id && !$user->is_moderator && !$user->is_admin) {
+            return false;
+        }
+
+        $comment->is_deleted = true;
+        $comment->comment = '[deleted]';
+        $comment->markeddown_comment = '<p>[deleted]</p>';
+        $comment->save();
+
+        // Update story comment count
+        $story = Story::find($comment->story_id);
+        if ($story) {
+            $this->updateStoryCommentCount($story);
+        }
+
+        return true;
+    }
+
+    public function flagComment(Comment $comment, User $user): bool
+    {
+        // Users can flag comments for moderation
+        $comment->flags = $comment->flags + 1;
+        $comment->save();
+
+        return true;
+    }
+
+    private function validateCommentData(array $data): void
+    {
+        if (empty($data['comment'])) {
+            throw new \Exception('Comment content is required');
+        }
+
+        if (strlen($data['comment']) > 65535) {
+            throw new \Exception('Comment must be 65535 characters or less');
+        }
+
+        if (isset($data['parent_comment_id']) && !empty($data['parent_comment_id'])) {
+            $parentExists = Comment::where('id', $data['parent_comment_id'])
+                                  ->where('is_deleted', false)
+                                  ->exists();
+            if (!$parentExists) {
+                throw new \Exception('Parent comment not found or deleted');
+            }
+        }
+    }
+}

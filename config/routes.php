@@ -32,6 +32,9 @@ $app->get('/s/{id}/edit', [StoryController::class, 'edit']);
 $app->group('/comments', function (RouteCollectorProxy $group) {
     $group->post('', [CommentController::class, 'store']);
     $group->post('/{id}/vote', [CommentController::class, 'vote']);
+    $group->get('/{id}', [CommentController::class, 'show']);
+    $group->delete('/{id}', [CommentController::class, 'delete']);
+    $group->post('/{id}/flag', [CommentController::class, 'flag']);
 });
 
 // Tag routes
