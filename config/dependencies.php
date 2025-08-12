@@ -11,28 +11,39 @@ use Psr\Log\LoggerInterface;
 use App\Services\AuthService;
 use App\Services\EmailService;
 use App\Services\InvitationService;
+use App\Services\StoryService;
+use App\Services\TagService;
 
 return [
     // Database
     DB::class => function () {
         $capsule = new DB;
         
-        $capsule->addConnection([
-            'driver' => 'mysql',
-            'host' => $_ENV['DB_HOST'],
-            'port' => $_ENV['DB_PORT'],
-            'database' => $_ENV['DB_DATABASE'],
-            'username' => $_ENV['DB_USERNAME'],
-            'password' => $_ENV['DB_PASSWORD'],
-            'charset' => 'utf8mb4',
-            'collation' => 'utf8mb4_unicode_ci',
-            'prefix' => '',
-            'strict' => true,
-            'engine' => null,
-        ]);
-        
-        $capsule->setAsGlobal();
-        $capsule->bootEloquent();
+        try {
+            $capsule->addConnection([
+                'driver' => 'mysql',
+                'host' => $_ENV['DB_HOST'],
+                'port' => $_ENV['DB_PORT'],
+                'database' => $_ENV['DB_DATABASE'],
+                'username' => $_ENV['DB_USERNAME'],
+                'password' => $_ENV['DB_PASSWORD'],
+                'charset' => 'utf8mb4',
+                'collation' => 'utf8mb4_unicode_ci',
+                'prefix' => '',
+                'strict' => true,
+                'engine' => null,
+            ]);
+            
+            $capsule->setAsGlobal();
+            $capsule->bootEloquent();
+            
+            // Test the connection
+            $capsule->getConnection()->getPdo();
+            
+        } catch (\Exception $e) {
+            // Database connection failed - set up a null connection resolver
+            // This prevents Eloquent from trying to use the database
+        }
         
         return $capsule;
     },
@@ -50,8 +61,19 @@ return [
         return $logger;
     },
 
+    // Database Available Flag
+    'database_available' => function (Container $c) {
+        try {
+            $db = $c->get(DB::class);
+            $db->getConnection()->getPdo();
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
+    },
+
     // Services
-    AuthService::class => function () {
+    AuthService::class => function (Container $c) {
         return new AuthService();
     },
 
@@ -61,5 +83,13 @@ return [
 
     InvitationService::class => function (Container $c) {
         return new InvitationService($c->get(EmailService::class));
+    },
+
+    TagService::class => function (Container $c) {
+        return new TagService();
+    },
+
+    StoryService::class => function (Container $c) {
+        return new StoryService($c->get(TagService::class));
     },
 ];

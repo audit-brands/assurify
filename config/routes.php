@@ -26,6 +26,7 @@ $app->group('/stories', function (RouteCollectorProxy $group) {
 });
 
 $app->get('/s/{id}/{slug}', [StoryController::class, 'show']);
+$app->get('/s/{id}/edit', [StoryController::class, 'edit']);
 
 // Comment routes
 $app->group('/comments', function (RouteCollectorProxy $group) {

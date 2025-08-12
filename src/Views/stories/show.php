@@ -1,70 +1,69 @@
-<?php $this->layout('layout', ['title' => $title]) ?>
+<?php
 
-<div class="story-detail">
-    <?php if ($story) : ?>
-        <div class="story-header">
-            <h1><a href="<?=$story['url']?>"><?=$this->e($story['title'])?></a></h1>
-            <div class="story-info">
-                <span class="story-score"><?=$story['score']?> points</span>
-                by <a href="/u/<?=$story['username']?>"><?=$story['username']?></a>
-                <?=$story['time_ago']?>
-            </div>
-            <?php if (!empty($story['tags'])) : ?>
-                <div class="story-tags">
-                    <?php foreach ($story['tags'] as $tag) : ?>
-                        <a href="/t/<?=$tag?>" class="tag"><?=$tag?></a>
-                    <?php endforeach ?>
-                </div>
-            <?php endif ?>
+$this->layout('layout', ['title' => $title]) ?>
+
+<div class="story-display">
+    <div class="story-header">
+        <div class="story-voting">
+            <button class="vote-up" data-story-id="<?=$story['id']?>" data-vote="1">
+                ▲
+            </button>
+            <div class="score"><?=$story['score']?></div>
+            <button class="vote-down" data-story-id="<?=$story['id']?>" data-vote="-1">
+                ▼
+            </button>
         </div>
-
-        <?php if ($story['description']) : ?>
-            <div class="story-description">
-                <?=$story['description']?>
-            </div>
-        <?php endif ?>
-
-        <div class="story-actions">
-            <a href="#" class="vote-up">▲</a>
-            <a href="#" class="vote-down">▼</a>
-        </div>
-    <?php else : ?>
-        <p>Story not found.</p>
-    <?php endif ?>
-
-    <div class="comments-section">
-        <h3>Comments (<?=count($comments)?>)</h3>
         
-        <?php if (empty($comments)) : ?>
-            <p>No comments yet. Be the first to comment!</p>
-        <?php else : ?>
-            <div class="comments">
-                <?php foreach ($comments as $comment) : ?>
-                    <div class="comment">
-                        <div class="comment-info">
-                            <a href="/u/<?=$comment['username']?>"><?=$comment['username']?></a>
-                            <?=$comment['time_ago']?>
-                            <span class="comment-score"><?=$comment['score']?> points</span>
-                        </div>
-                        <div class="comment-content">
-                            <?=$comment['content']?>
-                        </div>
-                        <div class="comment-actions">
-                            <a href="#" class="vote-up">▲</a>
-                            <a href="#" class="vote-down">▼</a>
-                            <a href="#">reply</a>
-                        </div>
+        <div class="story-content">
+            <h1 class="story-title">
+                <?php if ($story['url']) : ?>
+                    <a href="<?=$this->e($story['url'])?>" target="_blank" rel="noopener noreferrer">
+                        <?=$this->e($story['title'])?>
+                    </a>
+                    <span class="story-domain">(<?=$this->e($story['domain'])?>)</span>
+                <?php else : ?>
+                    <?=$this->e($story['title'])?>
+                <?php endif ?>
+            </h1>
+            
+            <div class="story-meta">
+                by <a href="/u/<?=$this->e($story['username'])?>"><?=$this->e($story['username'])?></a>
+                <?=$story['created_at_formatted']?>
+                
+                <?php if ($story['tags']) : ?>
+                    <div class="story-tags">
+                        <?php foreach ($story['tags'] as $tag) : ?>
+                            <a href="/t/<?=$this->e($tag)?>" class="tag"><?=$this->e($tag)?></a>
+                        <?php endforeach ?>
                     </div>
-                <?php endforeach ?>
+                <?php endif ?>
+                
+                <?php if ($story['user_is_author']) : ?>
+                    <span class="author-badge">author</span>
+                <?php endif ?>
             </div>
+        </div>
+    </div>
+    
+    <?php if ($story['description']) : ?>
+        <div class="story-description">
+            <?=nl2br($this->e($story['description']))?>
+        </div>
+    <?php endif ?>
+    
+    <div class="story-actions">
+        <a href="/s/<?=$this->e($story['short_id'])?>#comments">discuss</a>
+        <?php if (isset($_SESSION['user_id']) && $_SESSION['user_id'] == $story['user_id']) : ?>
+            <a href="/s/<?=$this->e($story['short_id'])?>/edit">edit</a>
         <?php endif ?>
-
-        <form class="comment-form" action="/comments" method="post">
-            <div class="form-group">
-                <label for="comment">Add a comment:</label>
-                <textarea name="comment" id="comment" rows="5" required></textarea>
-            </div>
-            <button type="submit">Post Comment</button>
-        </form>
+    </div>
+    
+    <div class="comments-section">
+        <h3>Comments</h3>
+        <?php if (empty($comments)) : ?>
+            <p>No comments yet.</p>
+        <?php else : ?>
+            <!-- TODO: Display comments in Phase 4 -->
+        <?php endif ?>
     </div>
 </div>

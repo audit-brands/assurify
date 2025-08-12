@@ -4,27 +4,56 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Services\TagService;
+use App\Services\StoryService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use League\Plates\Engine;
 
 class TagController extends BaseController
 {
+    public function __construct(
+        Engine $templates,
+        private TagService $tagService,
+        private StoryService $storyService
+    ) {
+        parent::__construct($templates);
+    }
+
     public function show(Request $request, Response $response, array $args): Response
     {
-        $tag = $args['tag'];
+        $tagName = $args['tag'];
+
+        $tag = $this->tagService->getTagByName($tagName);
+        if (!$tag) {
+            return $this->render($response, 'tags/not-found', [
+                'title' => 'Tag Not Found | Lobsters',
+                'tag' => $tagName
+            ]);
+        }
+
+        $stories = $this->storyService->getStoriesByTag($tagName);
 
         return $this->render($response, 'tags/show', [
-            'title' => $tag . ' | Lobsters',
-            'tag' => $tag,
-            'stories' => []
+            'title' => $tagName . ' | Lobsters',
+            'tag' => $tagName,
+            'tag_info' => [
+                'tag' => $tag->tag,
+                'description' => $tag->description,
+                'privileged' => $tag->privileged,
+                'is_media' => $tag->is_media,
+            ],
+            'stories' => $stories
         ]);
     }
 
     public function index(Request $request, Response $response): Response
     {
+        $tags = $this->tagService->getAllTags();
+
         return $this->render($response, 'tags/index', [
             'title' => 'Tags | Lobsters',
-            'tags' => []
+            'tags' => $tags
         ]);
     }
 }
