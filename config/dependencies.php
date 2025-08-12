@@ -24,6 +24,8 @@ use App\Services\LoggerService;
 use App\Services\RateLimitService;
 use App\Services\JwtService;
 use App\Services\PushNotificationService;
+use App\Services\WebSocketService;
+use App\Services\OfflineSyncService;
 
 return [
     // Database
@@ -152,5 +154,13 @@ return [
 
     PushNotificationService::class => function () {
         return new PushNotificationService();
+    },
+
+    WebSocketService::class => function () {
+        return new WebSocketService();
+    },
+
+    OfflineSyncService::class => function () {
+        return new OfflineSyncService();
     },
 ];

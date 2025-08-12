@@ -218,30 +218,321 @@ function isStaticAsset(pathname) {
 self.addEventListener('sync', event => {
   console.log('Background sync triggered:', event.tag);
   
-  if (event.tag === 'background-sync-stories') {
-    event.waitUntil(syncOfflineActions());
+  switch (event.tag) {
+    case 'background-sync-actions':
+      event.waitUntil(syncOfflineActions());
+      break;
+    case 'background-sync-stories':
+      event.waitUntil(syncStories());
+      break;
+    case 'background-sync-comments':
+      event.waitUntil(syncComments());
+      break;
+    default:
+      console.log('Unknown sync tag:', event.tag);
   }
 });
 
-// Sync offline actions when connection is restored
+// Sync all pending offline actions
 async function syncOfflineActions() {
   try {
-    const cache = await caches.open('offline-actions');
-    const requests = await cache.keys();
+    console.log('Starting offline action sync...');
     
-    for (const request of requests) {
+    // Get pending actions from IndexedDB
+    const pendingActions = await getStoredActions();
+    
+    if (pendingActions.length === 0) {
+      console.log('No pending actions to sync');
+      return;
+    }
+    
+    console.log(`Syncing ${pendingActions.length} pending actions`);
+    
+    for (const action of pendingActions) {
       try {
-        const response = await fetch(request);
-        if (response.ok) {
-          await cache.delete(request);
-          console.log('Synced offline action:', request.url);
+        const success = await syncAction(action);
+        if (success) {
+          await removeStoredAction(action.id);
+          console.log('Synced action:', action.type, action.id);
+        } else {
+          await incrementActionAttempts(action.id);
+          console.log('Failed to sync action:', action.type, action.id);
         }
       } catch (error) {
-        console.log('Failed to sync action:', request.url, error);
+        console.error('Error syncing action:', action, error);
+        await incrementActionAttempts(action.id);
+      }
+    }
+    
+    // Notify main thread of sync completion
+    await notifyClients('sync-completed', { 
+      type: 'actions',
+      synced: pendingActions.length 
+    });
+    
+  } catch (error) {
+    console.error('Background sync failed:', error);
+  }
+}
+
+// Sync individual action
+async function syncAction(action) {
+  const endpoint = '/api/v1/sync/queue';
+  
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': await getStoredAuthToken()
+      },
+      body: JSON.stringify({
+        type: action.type,
+        data: action.data
+      })
+    });
+    
+    return response.ok;
+  } catch (error) {
+    console.error('Failed to sync action:', error);
+    return false;
+  }
+}
+
+// Sync cached stories
+async function syncStories() {
+  try {
+    console.log('Syncing stories...');
+    
+    const response = await fetch('/api/v1/stories?limit=50', {
+      headers: {
+        'Authorization': await getStoredAuthToken()
+      }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success && data.data) {
+        await storeData('cached-stories', data.data);
+        await notifyClients('sync-completed', { 
+          type: 'stories',
+          count: data.data.length 
+        });
+        console.log(`Synced ${data.data.length} stories`);
       }
     }
   } catch (error) {
-    console.error('Background sync failed:', error);
+    console.error('Failed to sync stories:', error);
+  }
+}
+
+// Sync cached comments
+async function syncComments() {
+  try {
+    console.log('Syncing comments...');
+    
+    const cachedStories = await getData('cached-stories') || [];
+    
+    for (const story of cachedStories.slice(0, 10)) { // Limit to first 10 stories
+      try {
+        const response = await fetch(`/api/v1/stories/${story.id}/comments`, {
+          headers: {
+            'Authorization': await getStoredAuthToken()
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.data) {
+            await storeData(`story-comments-${story.id}`, data.data);
+          }
+        }
+      } catch (error) {
+        console.error(`Failed to sync comments for story ${story.id}:`, error);
+      }
+    }
+    
+    await notifyClients('sync-completed', { type: 'comments' });
+  } catch (error) {
+    console.error('Failed to sync comments:', error);
+  }
+}
+
+// IndexedDB operations for offline storage
+async function openDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('LobstersOffline', 1);
+    
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+    
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      
+      // Create object stores
+      if (!db.objectStoreNames.contains('actions')) {
+        const actionStore = db.createObjectStore('actions', { keyPath: 'id' });
+        actionStore.createIndex('type', 'type', { unique: false });
+        actionStore.createIndex('timestamp', 'timestamp', { unique: false });
+      }
+      
+      if (!db.objectStoreNames.contains('cache')) {
+        db.createObjectStore('cache', { keyPath: 'key' });
+      }
+      
+      if (!db.objectStoreNames.contains('auth')) {
+        db.createObjectStore('auth', { keyPath: 'type' });
+      }
+    };
+  });
+}
+
+// Store action for offline sync
+async function storeAction(action) {
+  const db = await openDB();
+  const transaction = db.transaction(['actions'], 'readwrite');
+  const store = transaction.objectStore('actions');
+  
+  const actionWithId = {
+    id: generateActionId(),
+    timestamp: Date.now(),
+    attempts: 0,
+    ...action
+  };
+  
+  await store.add(actionWithId);
+  return actionWithId.id;
+}
+
+// Get all stored actions
+async function getStoredActions() {
+  const db = await openDB();
+  const transaction = db.transaction(['actions'], 'readonly');
+  const store = transaction.objectStore('actions');
+  
+  return new Promise((resolve, reject) => {
+    const request = store.getAll();
+    request.onsuccess = () => resolve(request.result || []);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// Remove synced action
+async function removeStoredAction(actionId) {
+  const db = await openDB();
+  const transaction = db.transaction(['actions'], 'readwrite');
+  const store = transaction.objectStore('actions');
+  await store.delete(actionId);
+}
+
+// Increment action attempt count
+async function incrementActionAttempts(actionId) {
+  const db = await openDB();
+  const transaction = db.transaction(['actions'], 'readwrite');
+  const store = transaction.objectStore('actions');
+  
+  const action = await store.get(actionId);
+  if (action) {
+    action.attempts = (action.attempts || 0) + 1;
+    action.lastAttempt = Date.now();
+    
+    // Remove after 3 failed attempts
+    if (action.attempts >= 3) {
+      await store.delete(actionId);
+      console.log('Removed failed action after 3 attempts:', actionId);
+    } else {
+      await store.put(action);
+    }
+  }
+}
+
+// Store data in cache
+async function storeData(key, data) {
+  const db = await openDB();
+  const transaction = db.transaction(['cache'], 'readwrite');
+  const store = transaction.objectStore('cache');
+  
+  await store.put({
+    key: key,
+    data: data,
+    timestamp: Date.now()
+  });
+}
+
+// Get cached data
+async function getData(key) {
+  const db = await openDB();
+  const transaction = db.transaction(['cache'], 'readonly');
+  const store = transaction.objectStore('cache');
+  
+  return new Promise((resolve, reject) => {
+    const request = store.get(key);
+    request.onsuccess = () => {
+      const result = request.result;
+      if (result && !isExpired(result.timestamp)) {
+        resolve(result.data);
+      } else {
+        resolve(null);
+      }
+    };
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// Check if cached data is expired (4 hours TTL)
+function isExpired(timestamp) {
+  const TTL = 4 * 60 * 60 * 1000; // 4 hours
+  return Date.now() - timestamp > TTL;
+}
+
+// Store authentication token
+async function storeAuthToken(token) {
+  const db = await openDB();
+  const transaction = db.transaction(['auth'], 'readwrite');
+  const store = transaction.objectStore('auth');
+  
+  await store.put({
+    type: 'jwt',
+    token: token,
+    timestamp: Date.now()
+  });
+}
+
+// Get stored authentication token
+async function getStoredAuthToken() {
+  const db = await openDB();
+  const transaction = db.transaction(['auth'], 'readonly');
+  const store = transaction.objectStore('auth');
+  
+  return new Promise((resolve, reject) => {
+    const request = store.get('jwt');
+    request.onsuccess = () => {
+      const result = request.result;
+      if (result && !isExpired(result.timestamp)) {
+        resolve(`Bearer ${result.token}`);
+      } else {
+        resolve('');
+      }
+    };
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// Generate unique action ID
+function generateActionId() {
+  return 'action_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
+// Notify all clients of sync events
+async function notifyClients(type, data) {
+  const clients = await self.clients.matchAll({ includeUncontrolled: true });
+  
+  for (const client of clients) {
+    client.postMessage({
+      type: type,
+      data: data,
+      timestamp: Date.now()
+    });
   }
 }
 

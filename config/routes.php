@@ -17,6 +17,7 @@ use App\Controllers\Api\StoriesApiController;
 use App\Controllers\Api\V2\StoriesApiController as V2StoriesApiController;
 use App\Controllers\Api\DocsController;
 use App\Controllers\Api\PushController;
+use App\Controllers\Api\SyncController;
 use App\Middleware\ApiAuthMiddleware;
 use App\Middleware\ApiVersionMiddleware;
 use Slim\App;
@@ -152,6 +153,19 @@ $app->group('/api/v1', function (RouteCollectorProxy $group) {
         $group->post('/push/unsubscribe', [PushController::class, 'unsubscribe']);
         $group->get('/push/subscriptions', [PushController::class, 'getUserSubscriptions']);
         $group->post('/push/test', [PushController::class, 'sendTestNotification']);
+        
+        // Offline sync endpoints
+        $group->post('/sync/queue', [SyncController::class, 'queueAction']);
+        $group->post('/sync/process', [SyncController::class, 'syncPendingActions']);
+        $group->get('/sync/status', [SyncController::class, 'getSyncStatus']);
+        $group->post('/sync/cache', [SyncController::class, 'cacheData']);
+        $group->get('/sync/cache/{key}', [SyncController::class, 'getCachedData']);
+        $group->get('/sync/stories/cached', [SyncController::class, 'getCachedStories']);
+        $group->post('/sync/stories/cache', [SyncController::class, 'cacheStories']);
+        $group->get('/sync/stories/{storyId}/comments/cached', [SyncController::class, 'getCachedComments']);
+        $group->post('/sync/stories/{storyId}/comments/cache', [SyncController::class, 'cacheComments']);
+        $group->post('/sync/cleanup', [SyncController::class, 'cleanupExpiredData']);
+        $group->post('/sync/resolve-conflict', [SyncController::class, 'resolveConflict']);
         
     })->add(ApiAuthMiddleware::class);
 })->add(ApiVersionMiddleware::class);

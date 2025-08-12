@@ -81,6 +81,8 @@
     </div>
 
     <script src="/assets/application.js"></script>
+    <script src="/assets/performance.js"></script>
+    <script src="/assets/offline.js"></script>
     <script src="/assets/pwa.js"></script>
     <script src="/assets/websocket.js"></script>
     
