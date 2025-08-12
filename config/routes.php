@@ -12,6 +12,12 @@ use App\Controllers\InvitationController;
 use App\Controllers\SearchController;
 use App\Controllers\ModerationController;
 use App\Controllers\AdminController;
+use App\Controllers\Api\AuthApiController;
+use App\Controllers\Api\StoriesApiController;
+use App\Controllers\Api\V2\StoriesApiController as V2StoriesApiController;
+use App\Controllers\Api\DocsController;
+use App\Middleware\ApiAuthMiddleware;
+use App\Middleware\ApiVersionMiddleware;
 use Slim\App;
 use Slim\Routing\RouteCollectorProxy;
 
@@ -110,3 +116,63 @@ $app->group('/admin', function (RouteCollectorProxy $group) {
 
 // Health check endpoint (public)
 $app->get('/health', [AdminController::class, 'healthCheck']);
+
+// API Documentation
+$app->get('/api/docs', [DocsController::class, 'index']);
+$app->get('/api/openapi.json', [DocsController::class, 'openapi']);
+
+// API v1 Routes
+$app->group('/api/v1', function (RouteCollectorProxy $group) {
+    // Public auth endpoints
+    $group->post('/auth/login', [AuthApiController::class, 'login']);
+    $group->post('/auth/register', [AuthApiController::class, 'register']);
+    $group->post('/auth/refresh', [AuthApiController::class, 'refresh']);
+    $group->get('/auth/scopes', [AuthApiController::class, 'getAvailableScopes']);
+    
+    // Public stories endpoints (read-only)
+    $group->get('/stories', [StoriesApiController::class, 'index']);
+    $group->get('/stories/{id}', [StoriesApiController::class, 'show']);
+    
+    // Protected endpoints (require authentication)
+    $group->group('', function (RouteCollectorProxy $group) {
+        // Auth endpoints
+        $group->post('/auth/logout', [AuthApiController::class, 'logout']);
+        $group->get('/auth/me', [AuthApiController::class, 'me']);
+        $group->post('/auth/api-keys', [AuthApiController::class, 'createApiKey']);
+        
+        // Stories endpoints
+        $group->post('/stories', [StoriesApiController::class, 'store']);
+        $group->put('/stories/{id}', [StoriesApiController::class, 'update']);
+        $group->delete('/stories/{id}', [StoriesApiController::class, 'delete']);
+        $group->post('/stories/{id}/vote', [StoriesApiController::class, 'vote']);
+        
+    })->add(ApiAuthMiddleware::class);
+})->add(ApiVersionMiddleware::class);
+
+// API v2 Routes (Enhanced version)
+$app->group('/api/v2', function (RouteCollectorProxy $group) {
+    // Public auth endpoints (same as v1)
+    $group->post('/auth/login', [AuthApiController::class, 'login']);
+    $group->post('/auth/register', [AuthApiController::class, 'register']);
+    $group->post('/auth/refresh', [AuthApiController::class, 'refresh']);
+    $group->get('/auth/scopes', [AuthApiController::class, 'getAvailableScopes']);
+    
+    // Enhanced stories endpoints with v2 features
+    $group->get('/stories', [V2StoriesApiController::class, 'index']);
+    $group->get('/stories/{id}', [V2StoriesApiController::class, 'show']);
+    
+    // Protected endpoints (require authentication)
+    $group->group('', function (RouteCollectorProxy $group) {
+        // Auth endpoints (same as v1)
+        $group->post('/auth/logout', [AuthApiController::class, 'logout']);
+        $group->get('/auth/me', [AuthApiController::class, 'me']);
+        $group->post('/auth/api-keys', [AuthApiController::class, 'createApiKey']);
+        
+        // Enhanced stories endpoints
+        $group->post('/stories', [V2StoriesApiController::class, 'store']);
+        $group->put('/stories/{id}', [V2StoriesApiController::class, 'update']);
+        $group->delete('/stories/{id}', [V2StoriesApiController::class, 'delete']);
+        $group->post('/stories/{id}/vote', [V2StoriesApiController::class, 'vote']);
+        
+    })->add(ApiAuthMiddleware::class);
+})->add(ApiVersionMiddleware::class);

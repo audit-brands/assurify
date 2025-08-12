@@ -22,6 +22,7 @@ use App\Services\PerformanceService;
 use App\Services\AdminService;
 use App\Services\LoggerService;
 use App\Services\RateLimitService;
+use App\Services\JwtService;
 
 return [
     // Database
@@ -142,5 +143,9 @@ return [
             $c->get(PerformanceService::class),
             $c->get(CacheService::class)
         );
+    },
+
+    JwtService::class => function () {
+        return new JwtService();
     },
 ];

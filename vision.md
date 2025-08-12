@@ -100,6 +100,9 @@ Key tables (mirroring Lobsters):
 - Copy Lobsters' CSS/JS/assets
 - Preserve layout
 
+### 13. Branding
+- Replace Lobster name
+
 ---
 
 ## Routing Map
