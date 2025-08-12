@@ -26,6 +26,10 @@ use App\Services\JwtService;
 use App\Services\PushNotificationService;
 use App\Services\WebSocketService;
 use App\Services\OfflineSyncService;
+use App\Services\RecommendationService;
+use App\Services\ContentCategorizationService;
+use App\Services\DuplicateDetectionService;
+use App\Services\SearchIndexService;
 
 return [
     // Database
@@ -162,5 +166,21 @@ return [
 
     OfflineSyncService::class => function () {
         return new OfflineSyncService();
+    },
+
+    RecommendationService::class => function (Container $c) {
+        return new RecommendationService($c->get(CacheService::class));
+    },
+
+    ContentCategorizationService::class => function (Container $c) {
+        return new ContentCategorizationService($c->get(CacheService::class));
+    },
+
+    DuplicateDetectionService::class => function (Container $c) {
+        return new DuplicateDetectionService($c->get(CacheService::class));
+    },
+
+    SearchIndexService::class => function (Container $c) {
+        return new SearchIndexService($c->get(CacheService::class));
     },
 ];

@@ -18,6 +18,7 @@ use App\Controllers\Api\V2\StoriesApiController as V2StoriesApiController;
 use App\Controllers\Api\DocsController;
 use App\Controllers\Api\PushController;
 use App\Controllers\Api\SyncController;
+use App\Controllers\Api\ContentIntelligenceController;
 use App\Middleware\ApiAuthMiddleware;
 use App\Middleware\ApiVersionMiddleware;
 use Slim\App;
@@ -166,6 +167,18 @@ $app->group('/api/v1', function (RouteCollectorProxy $group) {
         $group->post('/sync/stories/{storyId}/comments/cache', [SyncController::class, 'cacheComments']);
         $group->post('/sync/cleanup', [SyncController::class, 'cleanupExpiredData']);
         $group->post('/sync/resolve-conflict', [SyncController::class, 'resolveConflict']);
+        
+        // Content Intelligence endpoints
+        $group->get('/intelligence/recommendations', [ContentIntelligenceController::class, 'getRecommendations']);
+        $group->get('/intelligence/feed', [ContentIntelligenceController::class, 'getPersonalizedFeed']);
+        $group->get('/intelligence/insights', [ContentIntelligenceController::class, 'getContentInsights']);
+        $group->get('/intelligence/recommendations/{storyId}/explain', [ContentIntelligenceController::class, 'explainRecommendation']);
+        $group->post('/intelligence/analyze', [ContentIntelligenceController::class, 'analyzeContent']);
+        $group->post('/intelligence/suggest-tags', [ContentIntelligenceController::class, 'suggestTags']);
+        $group->post('/intelligence/check-duplicates', [ContentIntelligenceController::class, 'checkDuplicates']);
+        $group->post('/intelligence/similarity', [ContentIntelligenceController::class, 'calculateSimilarity']);
+        $group->post('/intelligence/interaction', [ContentIntelligenceController::class, 'recordInteraction']);
+        $group->post('/intelligence/preferences', [ContentIntelligenceController::class, 'updatePreferences']);
         
     })->add(ApiAuthMiddleware::class);
 })->add(ApiVersionMiddleware::class);
