@@ -424,7 +424,8 @@ header#nav {
 }
 header#nav nav.links {
 	display: flex;
-	width: 100%
+	width: 100%;
+	align-items: baseline;
 }
 header#nav a, header#subnav a, header#subnav input[type="submit"] {
 	color: var(--color-fg-contrast-6);
@@ -450,9 +451,12 @@ header a.current_page {
 header#nav #logo {
 	margin-left: 0;
 	margin-right: 6rem; /* Further increase space - "Assurify" is longer than expected */
+	flex-shrink: 0; /* Prevent logo from shrinking in flex layout */
+	white-space: nowrap; /* Keep logo text on one line */
 }
 header#nav #logo ~ a {
 	margin-left: 0;
+	flex-shrink: 0; /* Prevent navigation links from shrinking and overlapping */
 }
 header#nav a:last-child {
 	margin-right: 0;
