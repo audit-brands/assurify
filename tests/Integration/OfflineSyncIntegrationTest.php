@@ -209,7 +209,7 @@ class OfflineSyncIntegrationTest extends TestCase
                 'url' => "https://example.com/story/{$i}",
                 'score' => rand(1, 100),
                 'comment_count' => rand(0, 50),
-                'tags' => ['technology', 'programming', 'web'],
+                'tags' => ['auditing', 'risk', 'jobs'],
                 'description' => str_repeat("This is story {$i}. ", 10)
             ];
         }

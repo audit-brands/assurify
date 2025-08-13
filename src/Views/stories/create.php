@@ -31,7 +31,7 @@ $this->layout('layout', ['title' => $title]) ?>
 
         <div class="form-group">
             <label for="tags">Tags:</label>
-            <input type="text" name="tags" id="tags" placeholder="programming, web, javascript" value="<?=$this->e(implode(', ', $suggested_tags ?? []))?>">
+            <input type="text" name="tags" id="tags" placeholder="auditing, risk, jobs" value="<?=$this->e(implode(', ', $suggested_tags ?? []))?>">
             <small>Comma-separated tags (max 5)</small>
         </div>
         

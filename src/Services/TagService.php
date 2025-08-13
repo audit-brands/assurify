@@ -160,8 +160,8 @@ class TagService
     {
         return [
             [
-                'tag' => 'programming',
-                'description' => 'Programming and software development',
+                'tag' => 'auditing',
+                'description' => 'Audit topics',
                 'privileged' => false,
                 'is_media' => false,
                 'inactive' => false,
@@ -169,8 +169,8 @@ class TagService
                 'hotness_mod' => 0,
             ],
             [
-                'tag' => 'web',
-                'description' => 'Web development and technologies',
+                'tag' => 'risk',
+                'description' => 'Risk management',
                 'privileged' => false,
                 'is_media' => false,
                 'inactive' => false,
@@ -178,8 +178,8 @@ class TagService
                 'hotness_mod' => 0,
             ],
             [
-                'tag' => 'technology',
-                'description' => 'General technology discussions',
+                'tag' => 'jobs',
+                'description' => 'share and find jobs',
                 'privileged' => false,
                 'is_media' => false,
                 'inactive' => false,

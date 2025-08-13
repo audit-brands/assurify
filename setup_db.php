@@ -153,11 +153,11 @@ try {
     // Create some test tags
     if (DB::table('tags')->count() == 0) {
         $tags = [
-            ['tag' => 'programming', 'description' => 'General programming discussions'],
-            ['tag' => 'web', 'description' => 'Web development'],
-            ['tag' => 'javascript', 'description' => 'JavaScript programming'],
-            ['tag' => 'php', 'description' => 'PHP programming'],
-            ['tag' => 'python', 'description' => 'Python programming'],
+            ['tag' => 'auditing', 'description' => 'Audit topics'],
+            ['tag' => 'risk', 'description' => 'Risk management'],
+            ['tag' => 'jobs', 'description' => 'share and find jobs'],
+            ['tag' => 'compliance', 'description' => 'Compliance and regulatory topics'],
+            ['tag' => 'security', 'description' => 'Security and cybersecurity discussions'],
         ];
         
         foreach ($tags as $tag) {
