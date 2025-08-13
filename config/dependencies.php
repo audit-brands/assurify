@@ -30,6 +30,18 @@ use App\Services\RecommendationService;
 use App\Services\ContentCategorizationService;
 use App\Services\DuplicateDetectionService;
 use App\Services\SearchIndexService;
+use App\Services\RateLimitingService;
+use App\Services\SecurityMonitorService;
+use App\Services\ContentModerationService;
+use App\Services\SpamPreventionService;
+use App\Services\AdvancedAuthService;
+use App\Services\IpSecurityService;
+use App\Services\VulnerabilityScanner;
+use App\Services\AuditService;
+use App\Services\EncryptionService;
+use App\Services\BackupRecoveryService;
+use App\Middleware\CsrfProtectionMiddleware;
+use App\Middleware\SecurityHeadersMiddleware;
 
 return [
     // Database
@@ -197,5 +209,74 @@ return [
 
     SearchIndexService::class => function (Container $c) {
         return new SearchIndexService($c->get(CacheService::class));
+    },
+
+    // Phase 12 Security Services
+    RateLimitingService::class => function (Container $c) {
+        return new RateLimitingService($c->get(CacheService::class));
+    },
+
+    SecurityMonitorService::class => function (Container $c) {
+        return new SecurityMonitorService($c->get(LoggerService::class));
+    },
+
+    ContentModerationService::class => function (Container $c) {
+        return new ContentModerationService($c->get(CacheService::class));
+    },
+
+    SpamPreventionService::class => function (Container $c) {
+        return new SpamPreventionService($c->get(CacheService::class));
+    },
+
+    AdvancedAuthService::class => function (Container $c) {
+        return new AdvancedAuthService(
+            $c->get(CacheService::class),
+            $c->get(LoggerService::class)
+        );
+    },
+
+    IpSecurityService::class => function (Container $c) {
+        return new IpSecurityService(
+            $c->get(CacheService::class),
+            $c->get(LoggerService::class)
+        );
+    },
+
+    VulnerabilityScanner::class => function (Container $c) {
+        return new VulnerabilityScanner(
+            $c->get(LoggerService::class),
+            $c->get(CacheService::class)
+        );
+    },
+
+    AuditService::class => function (Container $c) {
+        return new AuditService(
+            $c->get(LoggerService::class),
+            $c->get(CacheService::class)
+        );
+    },
+
+    EncryptionService::class => function (Container $c) {
+        return new EncryptionService(
+            $c->get(LoggerService::class),
+            $c->get(CacheService::class)
+        );
+    },
+
+    BackupRecoveryService::class => function (Container $c) {
+        return new BackupRecoveryService(
+            $c->get(LoggerService::class),
+            $c->get(CacheService::class),
+            $c->get(EncryptionService::class)
+        );
+    },
+
+    // Security Middleware
+    CsrfProtectionMiddleware::class => function () {
+        return new CsrfProtectionMiddleware();
+    },
+
+    SecurityHeadersMiddleware::class => function () {
+        return new SecurityHeadersMiddleware();
     },
 ];

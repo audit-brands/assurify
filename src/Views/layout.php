@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title><?=$this->e($title ?? 'Lobsters')?></title>
+    <title><?=$this->e($title ?? 'Assurify')?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="A community for programmers and technologists to share and discuss interesting links and stories">
+    <meta name="description" content="Advanced community platform for secure discussions, content sharing, and professional networking">
     <meta name="theme-color" content="#ff6600">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Lobsters">
+    <meta name="apple-mobile-web-app-title" content="Assurify">
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
@@ -36,15 +36,15 @@
     <link rel="stylesheet" type="text/css" href="/assets/application.css">
     
     <!-- RSS Feeds -->
-    <link rel="alternate" type="application/rss+xml" title="Lobsters - Stories" href="/feeds/stories.rss">
-    <link rel="alternate" type="application/rss+xml" title="Lobsters - Comments" href="/feeds/comments.rss">
+    <link rel="alternate" type="application/rss+xml" title="Assurify - Stories" href="/feeds/stories.rss">
+    <link rel="alternate" type="application/rss+xml" title="Assurify - Comments" href="/feeds/comments.rss">
 </head>
 <body>
     <div id="wrapper">
         <header id="header">
             <div class="header-content">
                 <a href="/" class="logo">
-                    <img src="/assets/logo.png" alt="Lobsters" width="50" height="50">
+                    <img src="/assets/logo.png" alt="Assurify" width="50" height="50">
                 </a>
                 <nav id="navigation">
                     <ul>
@@ -76,7 +76,7 @@
         </main>
 
         <footer id="footer">
-            <p>&copy; <?=date('Y')?> Lobsters Community</p>
+            <p>&copy; <?=date('Y')?> Assurify Platform</p>
         </footer>
     </div>
 

@@ -1,6 +1,6 @@
 {
-    "name": "assurify/lobsters-slim",
-    "description": "Lobsters community site port to Slim PHP",
+    "name": "assurify/platform",
+    "description": "Assurify - Advanced community platform with enterprise security features",
     "type": "project",
     "license": "MIT",
     "require": {

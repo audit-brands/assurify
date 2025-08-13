@@ -1,7 +1,7 @@
 {
-  "name": "Lobsters Community",
-  "short_name": "Lobsters",
-  "description": "A community for programmers and technologists to share and discuss interesting links and stories",
+  "name": "Assurify Platform",
+  "short_name": "Assurify",
+  "description": "Advanced community platform for secure discussions, content sharing, and professional networking",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -66,14 +66,14 @@
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "Lobsters home page on desktop"
+      "label": "Assurify home page on desktop"
     },
     {
       "src": "/assets/screenshots/mobile-home.png",
       "sizes": "375x667",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Lobsters home page on mobile"
+      "label": "Assurify home page on mobile"
     }
   ],
   "shortcuts": [

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lobsters API Documentation</title>
+    <title>Assurify API Documentation</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -128,8 +128,8 @@
 </head>
 <body>
     <div class="header">
-        <h1>Lobsters API Documentation</h1>
-        <p>RESTful API for the Lobsters community platform. Version: v1</p>
+        <h1>Assurify API Documentation</h1>
+        <p>RESTful API for the Assurify community platform. Version: v1</p>
     </div>
 
     <div class="nav">

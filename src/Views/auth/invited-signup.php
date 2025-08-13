@@ -6,7 +6,7 @@ $this->layout('layout', ['title' => $title]) ?>
     <h1>You're Invited!</h1>
     
     <div class="invitation-info">
-        <p><strong><?=$this->e($inviter->username)?></strong> has invited you to join Lobsters.</p>
+        <p><strong><?=$this->e($inviter->username)?></strong> has invited you to join Assurify.</p>
         <?php if (!empty($invitation->memo)) : ?>
             <blockquote>
                 <?=$this->e($invitation->memo)?>

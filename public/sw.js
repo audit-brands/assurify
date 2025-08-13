@@ -1,7 +1,7 @@
-// Service Worker for Lobsters PWA
-const CACHE_NAME = 'lobsters-v1.0.0';
-const API_CACHE_NAME = 'lobsters-api-v1.0.0';
-const STATIC_CACHE_NAME = 'lobsters-static-v1.0.0';
+// Service Worker for Assurify PWA
+const CACHE_NAME = 'assurify-v1.0.0';
+const API_CACHE_NAME = 'assurify-api-v1.0.0';
+const STATIC_CACHE_NAME = 'assurify-static-v1.0.0';
 
 // Files to cache immediately
 const STATIC_ASSETS = [

@@ -1,7 +1,7 @@
 <?php $this->layout('layout', ['title' => $title]) ?>
 
 <div class="stories">
-    <h1>Lobsters</h1>
+    <h1>Assurify</h1>
     
     <?php if (empty($stories)) : ?>
         <p>No stories yet. <a href="/stories">Submit the first one!</a></p>
