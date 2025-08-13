@@ -44,35 +44,31 @@
 </head>
 <body>
     <div id="wrapper">
-        <header id="header">
-            <div class="header-content">
-                <a href="/" class="logo">
-                    <span class="logo-text">Assurify</span>
-                </a>
-                <nav id="navigation">
-                    <ul>
-                        <li><a href="/active">active</a></li>
-                        <li><a href="/recent">recent</a></li>
-                        <li><a href="/comments">comments</a></li>
-                        <li><a href="/search">search</a></li>
-                        <li><a href="/stories">submit</a></li>
-                    </ul>
+        <header id="nav">
+            <div class="navholder">
+                <nav class="links">
+                    <a href="/" id="logo"><span class="logo-text">Assurify</span></a>
+                    <a href="/active"<?= ($_SERVER['REQUEST_URI'] === '/active' || $_SERVER['REQUEST_URI'] === '/') ? ' class="current_page"' : '' ?>>Active</a>
+                    <a href="/recent"<?= ($_SERVER['REQUEST_URI'] === '/recent') ? ' class="current_page"' : '' ?>>Recent</a>
+                    <a href="/comments"<?= ($_SERVER['REQUEST_URI'] === '/comments') ? ' class="current_page"' : '' ?>>Comments</a>
+                    <a href="/search"<?= ($_SERVER['REQUEST_URI'] === '/search') ? ' class="current_page"' : '' ?>>Search</a>
                 </nav>
-                <div id="user-nav">
-                    <?php if (isset($_SESSION['user_id'])) : ?>
-                        <span>Welcome, <a href="/u/<?=$_SESSION['username']?>"><?=$this->e($_SESSION['username'])?></a></span>
-                        <a href="/messages" id="messages-link">Messages</a> |
-                        <a href="/settings">Settings</a> |
-                        <a href="/invitations">Invitations</a> |
-                        <form action="/auth/logout" method="post" style="display: inline;">
-                            <button type="submit" class="link-button">Logout</button>
-                        </form>
-                    <?php else : ?>
-                        <a href="/auth/login">Login</a> |
-                        <a href="/auth/signup">Sign up</a>
-                    <?php endif ?>
-                </div>
             </div>
+        </header>
+        <header id="subnav">
+            <?php if (isset($_SESSION['user_id'])) : ?>
+                <a href="/u/<?=$_SESSION['username']?>"><?=$this->e($_SESSION['username'])?></a>
+                <a href="/messages" id="messages-link">Messages</a>
+                <a href="/settings">Settings</a>
+                <a href="/invitations">Invitations</a>
+                <a href="/stories">Submit</a>
+                <form action="/auth/logout" method="post" style="display: inline;">
+                    <input type="submit" value="Logout" class="link-button">
+                </form>
+            <?php else : ?>
+                <a href="/stories">Submit</a>
+                <a href="/auth/login">Login</a>
+            <?php endif ?>
         </header>
 
         <main id="main">
