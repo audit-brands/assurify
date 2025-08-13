@@ -449,7 +449,7 @@ header a.current_page {
 }
 header#nav #logo {
 	margin-left: 0;
-	margin-right: 4rem; /* Increase space to prevent overlap with logo text */
+	margin-right: 6rem; /* Further increase space - "Assurify" is longer than expected */
 }
 header#nav #logo ~ a {
 	margin-left: 0;
