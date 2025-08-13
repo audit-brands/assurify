@@ -66,9 +66,13 @@ return [
             // Log the database connection error
             error_log("Database connection failed: " . $e->getMessage());
             
+            // Still set up Eloquent with a null connection resolver to prevent errors
+            $capsule->setAsGlobal();
+            $capsule->bootEloquent();
+            
             // For development, we can continue without database
             // In production, this should throw an exception
-            if ($_ENV['APP_ENV'] === 'production') {
+            if (($_ENV['APP_ENV'] ?? 'development') === 'production') {
                 throw new \Exception("Database connection required in production: " . $e->getMessage());
             }
         }

@@ -13,6 +13,10 @@ class TagService
 {
     public function createTag(string $tagName, string $description = '', bool $privileged = false): ?Tag
     {
+        if (!$this->isDatabaseAvailable()) {
+            return null;
+        }
+        
         try {
             $tagName = $this->normalizeTagName($tagName);
 
@@ -83,6 +87,11 @@ class TagService
 
     public function getAllTags(bool $includeInactive = false): array
     {
+        // Check if database connection is available
+        if (!$this->isDatabaseAvailable()) {
+            return $this->getDefaultTags();
+        }
+        
         try {
             $query = Tag::query();
 
@@ -114,6 +123,33 @@ class TagService
             
             // Return default tags when database is not available
             return $this->getDefaultTags();
+        }
+    }
+
+    /**
+     * Check if database connection is available
+     */
+    private function isDatabaseAvailable(): bool
+    {
+        try {
+            // Try to get the Eloquent connection resolver
+            $resolver = \Illuminate\Database\Eloquent\Model::getConnectionResolver();
+            if ($resolver === null) {
+                return false;
+            }
+            
+            // Try to get the default connection
+            $connection = $resolver->connection();
+            if ($connection === null) {
+                return false;
+            }
+            
+            // Test the connection with a simple query
+            $connection->getPdo();
+            return true;
+            
+        } catch (\Exception $e) {
+            return false;
         }
     }
 
@@ -155,6 +191,10 @@ class TagService
 
     public function getTagByName(string $tagName): ?Tag
     {
+        if (!$this->isDatabaseAvailable()) {
+            return null;
+        }
+        
         try {
             return Tag::where('tag', $this->normalizeTagName($tagName))
                       ->where('inactive', false)
@@ -167,6 +207,10 @@ class TagService
 
     public function getPopularTags(int $limit = 20): array
     {
+        if (!$this->isDatabaseAvailable()) {
+            return array_slice($this->getDefaultTags(), 0, $limit);
+        }
+        
         try {
             $tags = Tag::withCount(['stories' => function ($query) {
                           $query->where('is_expired', false)
