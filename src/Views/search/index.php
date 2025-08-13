@@ -1,6 +1,6 @@
 <?php $this->layout('layout', ['title' => $title]) ?>
 
-<link rel="stylesheet" type="text/css" href="/assets/search.css">
+<link rel="stylesheet" type="text/css" href="/assets/search.css?v=<?=time()?>">
 
 <div class="story-form">
     <h1>Search</h1>
