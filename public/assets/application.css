@@ -449,7 +449,7 @@ header a.current_page {
 }
 header#nav #logo {
 	margin-left: 0;
-	margin-right: 2rem; /* Add space between logo and navigation links */
+	margin-right: 4rem; /* Increase space to prevent overlap with logo text */
 }
 header#nav #logo ~ a {
 	margin-left: 0;
