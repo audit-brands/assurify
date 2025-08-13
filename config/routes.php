@@ -8,6 +8,7 @@ use App\Controllers\CommentController;
 use App\Controllers\UserController;
 use App\Controllers\AuthController;
 use App\Controllers\TagController;
+use App\Controllers\MessageController;
 use App\Controllers\InvitationController;
 use App\Controllers\SearchController;
 use App\Controllers\ModerationController;
@@ -26,9 +27,9 @@ use Slim\Routing\RouteCollectorProxy;
 
 // Home routes
 $app->get('/', [HomeController::class, 'index']);
-$app->get('/newest', [HomeController::class, 'newest']);
+$app->get('/active', [HomeController::class, 'index']); // Active = same as home (hot stories)
 $app->get('/recent', [HomeController::class, 'recent']);
-$app->get('/top', [HomeController::class, 'top']);
+$app->get('/comments', [CommentController::class, 'index']);
 
 // Story routes
 $app->group('/stories', function (RouteCollectorProxy $group) {
@@ -55,7 +56,25 @@ $app->get('/tags', [TagController::class, 'index']);
 
 // User routes
 $app->get('/u/{username}', [UserController::class, 'show']);
+$app->get('/u/{username}/saved', [UserController::class, 'saved']);
 $app->get('/users', [UserController::class, 'index']);
+
+// Settings routes
+$app->get('/settings', [UserController::class, 'settings']);
+$app->post('/settings', [UserController::class, 'updateSettings']);
+
+// Message routes
+$app->group('/messages', function (RouteCollectorProxy $group) {
+    $group->get('', [MessageController::class, 'inbox']);
+    $group->get('/sent', [MessageController::class, 'sent']);
+    $group->get('/compose', [MessageController::class, 'compose']);
+    $group->post('/send', [MessageController::class, 'send']);
+    $group->get('/search', [MessageController::class, 'search']);
+    $group->get('/unread-count', [MessageController::class, 'unreadCount']);
+    $group->get('/{id}', [MessageController::class, 'show']);
+    $group->post('/{id}/reply', [MessageController::class, 'reply']);
+    $group->get('/{id}/delete', [MessageController::class, 'delete']);
+});
 
 // Auth routes
 $app->group('/auth', function (RouteCollectorProxy $group) {

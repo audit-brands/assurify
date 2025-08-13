@@ -12,7 +12,7 @@ class User extends Model
     protected $fillable = [
         'username',
         'email',
-        'password_hash',
+        'password_digest',
         'created_at',
         'is_admin',
         'is_moderator',
@@ -35,11 +35,13 @@ class User extends Model
         'banned_at',
         'banned_reason',
         'deleted',
-        'disabled_invites'
+        'disabled_invites',
+        'filtered_tags',
+        'favorite_tags'
     ];
 
     protected $hidden = [
-        'password_hash',
+        'password_digest',
         'session_token',
         'password_reset_token'
     ];
@@ -80,5 +82,111 @@ class User extends Model
     public function invitations(): HasMany
     {
         return $this->hasMany(Invitation::class);
+    }
+
+    // Messages sent by this user
+    public function sentMessages(): HasMany
+    {
+        return $this->hasMany(Message::class, 'author_user_id');
+    }
+
+    // Messages received by this user
+    public function receivedMessages(): HasMany
+    {
+        return $this->hasMany(Message::class, 'recipient_user_id');
+    }
+
+    // All messages (sent or received) for this user
+    public function messages()
+    {
+        return Message::where('author_user_id', $this->id)
+                     ->orWhere('recipient_user_id', $this->id);
+    }
+
+    // Hats worn by this user
+    public function hats(): HasMany
+    {
+        return $this->hasMany(Hat::class)->whereNull('doffed_at');
+    }
+
+    // All hats (including doffed ones)
+    public function allHats(): HasMany
+    {
+        return $this->hasMany(Hat::class);
+    }
+
+    // Hats granted by this user (if moderator/admin)
+    public function grantedHats(): HasMany
+    {
+        return $this->hasMany(Hat::class, 'granted_by_user_id');
+    }
+
+    // Stories saved by this user
+    public function savedStories(): HasMany
+    {
+        return $this->hasMany(SavedStory::class);
+    }
+
+    // Stories hidden by this user
+    public function hiddenStories(): HasMany
+    {
+        return $this->hasMany(Hidden::class);
+    }
+
+    // Tag filters set by this user
+    public function tagFilters(): HasMany
+    {
+        return $this->hasMany(TagFilter::class);
+    }
+
+    // Moderation actions performed by this user
+    public function moderations(): HasMany
+    {
+        return $this->hasMany(Moderation::class, 'moderator_user_id');
+    }
+
+    // Moderation actions performed on this user
+    public function moderationsReceived(): HasMany
+    {
+        return $this->hasMany(Moderation::class, 'user_id');
+    }
+
+    // Check if user has saved a specific story
+    public function hasSavedStory(int $storyId): bool
+    {
+        return SavedStory::isSavedByUser($this->id, $storyId);
+    }
+
+    // Check if user has hidden a specific story
+    public function hasHiddenStory(int $storyId): bool
+    {
+        return Hidden::isHiddenByUser($this->id, $storyId);
+    }
+
+    // Check if user has filtered a specific tag
+    public function hasFilteredTag(int $tagId): bool
+    {
+        return TagFilter::isFilteredByUser($this->id, $tagId);
+    }
+
+    // Get active hats for display
+    public function getActiveHats()
+    {
+        return $this->hats()->orderBy('created_at', 'desc')->get();
+    }
+
+    // Check if user can moderate
+    public function canModerate(): bool
+    {
+        return $this->is_admin || $this->is_moderator;
+    }
+
+    // Get unread message count
+    public function getUnreadMessageCount(): int
+    {
+        return $this->receivedMessages()
+                   ->where('has_been_read', false)
+                   ->where('deleted_by_recipient', false)
+                   ->count();
     }
 }

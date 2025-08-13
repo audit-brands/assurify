@@ -7,17 +7,18 @@ namespace App\Controllers\Api;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use App\Services\AuthService;
+use App\Services\AuthServiceInterface;
 use App\Services\JwtService;
 use App\Services\RateLimitService;
 
 class AuthApiController extends BaseApiController
 {
-    private AuthService $authService;
+    private AuthServiceInterface $authService;
     private JwtService $jwtService;
     private RateLimitService $rateLimitService;
     
     public function __construct(
-        AuthService $authService,
+        AuthServiceInterface $authService,
         JwtService $jwtService,
         RateLimitService $rateLimitService
     ) {

@@ -178,6 +178,20 @@ class CommentController extends BaseController
         }
     }
 
+    public function index(Request $request, Response $response): Response
+    {
+        try {
+            $comments = $this->commentService->getRecentComments(50);
+        } catch (\Exception $e) {
+            $comments = [];
+        }
+
+        return $this->render($response, 'comments/index', [
+            'title' => 'Recent Comments | Assurify',
+            'comments' => $comments
+        ]);
+    }
+
     public function commentsFeed(Request $request, Response $response): Response
     {
         $rssContent = $this->feedService->generateCommentsFeed();

@@ -1,0 +1,124 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "username": "admin",
+      "email": "admin@assurify.local",
+      "password_hash": "$argon2id$v=19$m=65536,t=4,p=1$TWtqWmVveVpVTjVoZ3kuYg$v7Q3lm/NIvHmZZsHecj9M90Nn0sM5bdtumJwNVvAAbk",
+      "karma": 1000,
+      "is_admin": true,
+      "is_moderator": true,
+      "is_banned": false,
+      "created_at": "2025-01-13T12:00:00Z",
+      "session_token": null
+    },
+    {
+      "id": 2,
+      "username": "testuser", 
+      "email": "test@example.com",
+      "password_hash": "$argon2id$v=19$m=65536,t=4,p=1$ekwyNW1ocTdkajNZLkpWWg$p3ZSOSz6Rn7wtnvzyTZMcfHGblEynoguoFGf8eLBwmY",
+      "karma": 100,
+      "is_admin": false,
+      "is_moderator": false, 
+      "is_banned": false,
+      "created_at": "2025-01-13T12:00:00Z",
+      "session_token": null
+    }
+  ],
+  "tags": [
+    {
+      "id": 1,
+      "tag": "auditing",
+      "description": "Audit topics and best practices",
+      "privileged": false,
+      "is_media": false,
+      "inactive": false,
+      "hotness_mod": 0
+    },
+    {
+      "id": 2,
+      "tag": "risk",
+      "description": "Risk management and assessment", 
+      "privileged": false,
+      "is_media": false,
+      "inactive": false,
+      "hotness_mod": 0
+    },
+    {
+      "id": 3,
+      "tag": "jobs",
+      "description": "Job postings and career opportunities",
+      "privileged": false,
+      "is_media": false,
+      "inactive": false,
+      "hotness_mod": 0
+    },
+    {
+      "id": 4,
+      "tag": "compliance",
+      "description": "Regulatory compliance discussions",
+      "privileged": false,
+      "is_media": false,
+      "inactive": false,
+      "hotness_mod": 0
+    },
+    {
+      "id": 5,
+      "tag": "security",
+      "description": "Security and cybersecurity topics",
+      "privileged": false,
+      "is_media": false,
+      "inactive": false,
+      "hotness_mod": 0
+    }
+  ],
+  "stories": [
+    {
+      "id": 1,
+      "user_id": 1,
+      "title": "Welcome to Assurify - A Platform for Audit and Risk Professionals",
+      "url": "https://example.com/welcome-to-assurify",
+      "description": "Welcome to Assurify! This is a community platform designed specifically for audit and risk management professionals. Share knowledge, discuss best practices, and connect with peers in the industry.",
+      "short_id": "abc123",
+      "score": 5,
+      "upvotes": 5,
+      "downvotes": 0,
+      "comments_count": 2,
+      "user_is_author": false,
+      "is_expired": false,
+      "is_moderated": false,
+      "created_at": "2025-01-13T12:00:00Z",
+      "tags": [1, 4]
+    }
+  ],
+  "comments": [
+    {
+      "id": 1,
+      "user_id": 2,
+      "story_id": 1,
+      "parent_comment_id": null,
+      "comment": "Great initiative! Looking forward to connecting with other audit professionals here.",
+      "short_id": "def456",
+      "score": 3,
+      "is_deleted": false,
+      "is_moderated": false,
+      "created_at": "2025-01-13T13:00:00Z"
+    },
+    {
+      "id": 2,
+      "user_id": 1,
+      "story_id": 1,
+      "parent_comment_id": 1,
+      "comment": "Thank you! We're excited to build a strong community of audit and risk professionals.",
+      "short_id": "ghi789",
+      "score": 2,
+      "is_deleted": false,
+      "is_moderated": false,
+      "created_at": "2025-01-13T13:30:00Z"
+    }
+  ],
+  "password_info": {
+    "admin": "admin123",
+    "testuser": "password"
+  }
+}

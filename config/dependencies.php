@@ -9,6 +9,8 @@ use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use Psr\Log\LoggerInterface;
 use App\Services\AuthService;
+use App\Services\AuthServiceInterface;
+use App\Services\TestAuthService;
 use App\Services\EmailService;
 use App\Services\InvitationService;
 use App\Services\StoryService;
@@ -16,6 +18,8 @@ use App\Services\TagService;
 use App\Services\CommentService;
 use App\Services\SearchService;
 use App\Services\FeedService;
+use App\Services\UserService;
+use App\Services\MessageService;
 use App\Services\ModerationService;
 use App\Services\CacheService;
 use App\Services\PerformanceService;
@@ -49,24 +53,43 @@ return [
         $capsule = new DB;
         
         try {
-            $capsule->addConnection([
-                'driver' => 'mysql',
-                'host' => $_ENV['DB_HOST'] ?? 'localhost',
-                'port' => $_ENV['DB_PORT'] ?? '3306',
-                'database' => $_ENV['DB_DATABASE'] ?? 'lobsters_slim',
-                'username' => $_ENV['DB_USERNAME'] ?? 'root',
-                'password' => $_ENV['DB_PASSWORD'] ?? '',
-                'charset' => 'utf8mb4',
-                'collation' => 'utf8mb4_unicode_ci',
-                'prefix' => '',
-                'strict' => false, // Set to false for compatibility
-                'engine' => null,
-                'options' => [
-                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-                    \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
-                    \PDO::ATTR_EMULATE_PREPARES => false,
-                ]
-            ]);
+            $dbConnection = $_ENV['DB_CONNECTION'] ?? 'mysql';
+            
+            if ($dbConnection === 'sqlite') {
+                $dbPath = $_ENV['DB_DATABASE'] ?? __DIR__ . '/../database.sqlite';
+                
+                // Create SQLite file if it doesn't exist
+                if (!file_exists($dbPath)) {
+                    touch($dbPath);
+                }
+                
+                $capsule->addConnection([
+                    'driver' => 'sqlite',
+                    'database' => $dbPath,
+                    'prefix' => '',
+                    'foreign_key_constraints' => true,
+                ]);
+            } else {
+                // MySQL configuration
+                $capsule->addConnection([
+                    'driver' => 'mysql',
+                    'host' => $_ENV['DB_HOST'] ?? 'localhost',
+                    'port' => $_ENV['DB_PORT'] ?? '3306',
+                    'database' => $_ENV['DB_DATABASE'] ?? 'assurify_dev',
+                    'username' => $_ENV['DB_USERNAME'] ?? 'root',
+                    'password' => $_ENV['DB_PASSWORD'] ?? '',
+                    'charset' => 'utf8mb4',
+                    'collation' => 'utf8mb4_unicode_ci',
+                    'prefix' => '',
+                    'strict' => false,
+                    'engine' => null,
+                    'options' => [
+                        \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+                        \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+                        \PDO::ATTR_EMULATE_PREPARES => false,
+                    ]
+                ]);
+            }
             
             $capsule->setAsGlobal();
             $capsule->bootEloquent();
@@ -75,15 +98,14 @@ return [
             $capsule->getConnection()->getPdo();
             
         } catch (\Exception $e) {
-            // Log the database connection error
+            // For development, just set up basic Eloquent without database
             error_log("Database connection failed: " . $e->getMessage());
+            error_log("Database connection error class: " . get_class($e));
+            error_log("Database connection error trace: " . $e->getTraceAsString());
             
-            // Still set up Eloquent with a null connection resolver to prevent errors
+            // Just set up the capsule without connection for fallback
             $capsule->setAsGlobal();
-            $capsule->bootEloquent();
             
-            // For development, we can continue without database
-            // In production, this should throw an exception
             if (($_ENV['APP_ENV'] ?? 'development') === 'production') {
                 throw new \Exception("Database connection required in production: " . $e->getMessage());
             }
@@ -116,9 +138,17 @@ return [
         }
     },
 
-    // Services
+    // Services - Use real AuthService with SQLite database
+    AuthServiceInterface::class => function (Container $c) {
+        return new AuthService();
+    },
+    
     AuthService::class => function (Container $c) {
         return new AuthService();
+    },
+    
+    TestAuthService::class => function () {
+        return new TestAuthService();
     },
 
     EmailService::class => function () {
@@ -141,12 +171,23 @@ return [
         return new CommentService();
     },
 
-    SearchService::class => function () {
-        return new SearchService();
+    SearchService::class => function (Container $c) {
+        return new SearchService(
+            $c->get(CacheService::class),
+            $c->get(SearchIndexService::class)
+        );
     },
 
     FeedService::class => function () {
         return new FeedService();
+    },
+
+    UserService::class => function () {
+        return new UserService();
+    },
+
+    MessageService::class => function () {
+        return new MessageService();
     },
 
     ModerationService::class => function () {

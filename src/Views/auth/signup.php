@@ -2,7 +2,7 @@
 
 $this->layout('layout', ['title' => $title]) ?>
 
-<div class="auth-form">
+<div class="story-form">
     <h1>Sign Up</h1>
     
     <?php if ($error) : ?>

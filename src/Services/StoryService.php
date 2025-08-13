@@ -52,9 +52,12 @@ class StoryService
         $story->description = trim($data['description'] ?? '');
         $story->short_id = $this->generateShortId();
         $story->score = 1; // Initial score from submitter
-        $story->upvotes = 1;
-        $story->downvotes = 0;
         $story->user_is_author = $data['user_is_author'] ?? false;
+        $story->normalized_url = $story->url ? $this->normalizeUrl($story->url) : null;
+        $story->token = bin2hex(random_bytes(16));
+        $story->created_at = date('Y-m-d H:i:s');
+        $story->updated_at = date('Y-m-d H:i:s');
+        $story->last_edited_at = date('Y-m-d H:i:s');
 
         // Process markdown for description
         if ($story->description) {
@@ -79,8 +82,8 @@ class StoryService
         // Normalize URL for comparison
         $normalizedUrl = $this->normalizeUrl($url);
 
-        return Story::where('url', $normalizedUrl)
-                   ->where('is_expired', false)
+        return Story::where('normalized_url', $normalizedUrl)
+                   ->where('is_deleted', false)
                    ->first();
     }
 
@@ -113,7 +116,7 @@ class StoryService
     public function getStoriesForListing(string $sort = 'hot', int $limit = 25, int $offset = 0): array
     {
         try {
-            $query = Story::where('is_expired', false)
+            $query = Story::where('is_deleted', false)
                          ->where('is_moderated', false)
                          ->with(['user', 'tags']);
 
@@ -146,18 +149,91 @@ class StoryService
         }
     }
 
-    public function getStoriesByTag(string $tagName, int $limit = 25): array
+    public function getRecentStories(int $limit = 25): array
+    {
+        return $this->getStoriesForListing('recent', $limit);
+    }
+
+    public function getNewestStories(int $limit = 25): array
+    {
+        return $this->getStoriesForListing('newest', $limit);
+    }
+
+    public function getTopStories(int $limit = 25): array
+    {
+        return $this->getStoriesForListing('top', $limit);
+    }
+
+    public function getHotStories(int $limit = 25): array
+    {
+        return $this->getStoriesForListing('hot', $limit);
+    }
+
+    public function getStories(int $limit = 25, int $offset = 0, string $sort = 'hot'): array
+    {
+        return $this->getStoriesForListing($sort, $limit, $offset);
+    }
+
+    public function getTotalStories(): int
     {
         try {
-            $stories = Story::whereHas('tags', function ($query) use ($tagName) {
+            return Story::where('is_deleted', false)
+                       ->where('is_moderated', false)
+                       ->count();
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    public function getStoriesByTag(string $tagName, int $page = 1, string $sort = 'hottest', string $timeframe = 'all', int $limit = 25): array
+    {
+        try {
+            $query = Story::whereHas('tags', function ($query) use ($tagName) {
                              $query->where('tag', $tagName);
             })
                          ->where('is_expired', false)
                          ->where('is_moderated', false)
-                         ->with(['user', 'tags'])
-                         ->orderBy('created_at', 'desc')
-                         ->take($limit)
-                         ->get();
+                         ->with(['user', 'tags']);
+
+            // Apply timeframe filter
+            switch ($timeframe) {
+                case 'day':
+                    $query->where('created_at', '>=', date('Y-m-d H:i:s', strtotime('-1 day')));
+                    break;
+                case 'week':
+                    $query->where('created_at', '>=', date('Y-m-d H:i:s', strtotime('-1 week')));
+                    break;
+                case 'month':
+                    $query->where('created_at', '>=', date('Y-m-d H:i:s', strtotime('-1 month')));
+                    break;
+                case 'year':
+                    $query->where('created_at', '>=', date('Y-m-d H:i:s', strtotime('-1 year')));
+                    break;
+                case 'all':
+                default:
+                    // No time filter
+                    break;
+            }
+
+            // Apply sorting
+            switch ($sort) {
+                case 'newest':
+                    $query->orderBy('created_at', 'desc');
+                    break;
+                case 'oldest':
+                    $query->orderBy('created_at', 'asc');
+                    break;
+                case 'most_comments':
+                    $query->orderBy('comments_count', 'desc');
+                    break;
+                case 'hottest':
+                default:
+                    $query->orderByRaw('(upvotes - downvotes) / POWER((JULIANDAY("now") - JULIANDAY(created_at)) * 24 + 2, 1.5) DESC');
+                    break;
+            }
+
+            $offset = ($page - 1) * $limit;
+            $stories = $query->offset($offset)->take($limit)->get();
 
             return $this->formatStoriesForView($stories);
         } catch (\Exception $e) {
@@ -167,37 +243,71 @@ class StoryService
 
     public function formatStoriesForView($stories): array
     {
-        return $stories->map(function ($story) {
-            return [
+        if (empty($stories)) {
+            return [];
+        }
+
+        // Keep as collection/objects, don't convert to array
+        if (is_object($stories) && method_exists($stories, 'all')) {
+            $stories = $stories->all();
+        }
+
+        if (!is_array($stories)) {
+            return [];
+        }
+
+        $formatted = [];
+        foreach ($stories as $story) {
+            // Story should be an object at this point
+            $title = $story->title ?? 'Untitled';
+            $storyData = [
                 'id' => $story->id,
                 'short_id' => $story->short_id,
-                'title' => $story->title,
-                'url' => $story->url ?: "/s/{$story->short_id}/" . $this->generateSlug($story->title),
-                'slug' => $this->generateSlug($story->title),
-                'description' => $story->description,
-                'markeddown_description' => $story->markeddown_description,
-                'domain' => $story->url ? $this->extractDomain($story->url) : 'self',
-                'score' => $story->score,
-                'upvotes' => $story->upvotes,
-                'downvotes' => $story->downvotes,
-                'comments_count' => $story->comments_count,
-                'username' => $story->user->username,
+                'title' => $title,
+                'description' => $story->description ?? '',
+                'markeddown_description' => $story->markeddown_description ?? '',
+                'score' => $story->score ?? 1,
+                'upvotes' => $story->upvotes ?? 1,
+                'downvotes' => $story->downvotes ?? 0,
+                'comments_count' => $story->comments_count ?? 0,
                 'user_id' => $story->user_id,
-                'user_is_author' => $story->user_is_author,
+                'user_is_author' => $story->user_is_author ?? false,
                 'created_at' => $story->created_at,
+                'username' => $story->user->username ?? 'Unknown',
                 'time_ago' => $this->timeAgo($story->created_at),
-                'tags' => $story->tags->pluck('tag')->toArray(),
+                'created_at_formatted' => $this->timeAgo($story->created_at),
+                'tags' => []
             ];
-        })->toArray();
+            
+            // Handle URL - use story URL or generate permalink
+            $storyUrl = $story->url ?? '';
+            $storyData['url'] = $storyUrl ?: "/s/" . $storyData['short_id'] . "/" . $this->generateSlug($title);
+            $storyData['slug'] = $this->generateSlug($title);
+            $storyData['domain'] = $storyUrl ? $this->extractDomain($storyUrl) : 'self';
+            
+            // Handle tags - use simple iteration instead of Laravel helpers
+            if (isset($story->tags)) {
+                foreach ($story->tags as $tag) {
+                    $storyData['tags'][] = $tag->tag;
+                }
+            }
+            
+            $formatted[] = $storyData;
+        }
+        
+        return $formatted;
     }
 
-    public function generateSlug(string $title): string
+    public function generateSlug(?string $title): string
     {
+        if (empty($title)) {
+            return 'untitled';
+        }
         $slug = strtolower(trim($title));
         $slug = preg_replace('/[^a-z0-9-]/', '_', $slug);
         $slug = preg_replace('/_+/', '_', $slug);
         $slug = trim($slug, '_');
-        return substr($slug, 0, 50);
+        return substr($slug ?: 'untitled', 0, 50);
     }
 
     public function extractDomain(string $url): string
@@ -207,8 +317,16 @@ class StoryService
         return preg_replace('/^www\./', '', $host);
     }
 
-    public function timeAgo(Carbon $date): string
+    public function timeAgo($date): string
     {
+        if (!$date) {
+            return 'unknown';
+        }
+        
+        if (is_string($date)) {
+            $date = Carbon::parse($date);
+        }
+        
         return $date->diffForHumans();
     }
 
@@ -246,6 +364,7 @@ class StoryService
         $voteRecord->user_id = $user->id;
         $voteRecord->story_id = $story->id;
         $voteRecord->vote = $vote;
+        $voteRecord->updated_at = date('Y-m-d H:i:s');
         $voteRecord->save();
 
         $this->updateStoryScore($story);

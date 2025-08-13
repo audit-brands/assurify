@@ -27,6 +27,15 @@ class CommentService
         return $shortId;
     }
 
+    private function generateUniqueToken(): string
+    {
+        do {
+            $token = bin2hex(random_bytes(16)); // 32-character hex string
+        } while (Comment::where('token', $token)->exists());
+
+        return $token;
+    }
+
     public function createComment(User $user, Story $story, array $data): Comment
     {
         // Validate input
@@ -42,6 +51,10 @@ class CommentService
         $comment->score = 1; // Initial score from submitter
         $comment->upvotes = 1;
         $comment->downvotes = 0;
+        $comment->created_at = date('Y-m-d H:i:s');
+        $comment->updated_at = date('Y-m-d H:i:s');
+        $comment->last_edited_at = date('Y-m-d H:i:s');
+        $comment->token = $this->generateUniqueToken();
 
         // Process markdown for comment
         if ($comment->comment) {
@@ -128,28 +141,44 @@ class CommentService
 
     public function formatCommentsForView($comments): array
     {
-        return $comments->map(function ($comment) {
-            return [
+        if (empty($comments)) {
+            return [];
+        }
+
+        // Convert collection to array if needed
+        if (is_object($comments) && method_exists($comments, 'all')) {
+            $comments = $comments->all();
+        }
+
+        $formatted = [];
+        foreach ($comments as $comment) {
+            $formatted[] = [
                 'id' => $comment->id,
                 'short_id' => $comment->short_id,
                 'comment' => $comment->comment,
+                'content' => $comment->markeddown_comment ?? $comment->comment,
                 'markeddown_comment' => $comment->markeddown_comment,
-                'score' => $comment->score,
-                'upvotes' => $comment->upvotes,
-                'downvotes' => $comment->downvotes,
-                'confidence' => $comment->confidence,
+                'score' => $comment->score ?? 0,
+                'upvotes' => $comment->upvotes ?? 0,
+                'downvotes' => $comment->downvotes ?? 0,
+                'confidence' => $comment->confidence ?? 0,
                 'parent_comment_id' => $comment->parent_comment_id,
                 'thread_id' => $comment->thread_id,
-                'username' => $comment->user->username,
+                'username' => $comment->user->username ?? 'Unknown',
                 'user_id' => $comment->user_id,
                 'story_id' => $comment->story_id,
+                'story_title' => $comment->story->title ?? 'Unknown Story',
+                'story_short_id' => $comment->story->short_id ?? '',
+                'story_slug' => $this->generateSlug($comment->story->title ?? 'unknown'),
                 'is_deleted' => $comment->is_deleted,
                 'is_moderated' => $comment->is_moderated,
                 'created_at' => $comment->created_at,
                 'time_ago' => $this->timeAgo($comment->created_at),
                 'created_at_formatted' => $comment->created_at->format('Y-m-d H:i:s'),
             ];
-        })->toArray();
+        }
+        
+        return $formatted;
     }
 
     public function castVote(Comment $comment, User $user, int $vote): bool
@@ -186,6 +215,7 @@ class CommentService
         $voteRecord->user_id = $user->id;
         $voteRecord->comment_id = $comment->id;
         $voteRecord->vote = $vote;
+        $voteRecord->updated_at = date('Y-m-d H:i:s');
         $voteRecord->save();
 
         $this->updateCommentScore($comment);
@@ -194,6 +224,7 @@ class CommentService
     private function updateVote(Comment $comment, Vote $existingVote, int $vote): void
     {
         $existingVote->vote = $vote;
+        $existingVote->updated_at = date('Y-m-d H:i:s');
         $existingVote->save();
 
         $this->updateCommentScore($comment);
@@ -248,10 +279,6 @@ class CommentService
         $story->save();
     }
 
-    public function timeAgo(Carbon $date): string
-    {
-        return $date->diffForHumans();
-    }
 
     public function getCommentByShortId(string $shortId): ?Comment
     {
@@ -292,6 +319,44 @@ class CommentService
         $comment->save();
 
         return true;
+    }
+
+    public function getRecentComments(int $limit = 50): array
+    {
+        try {
+            $comments = Comment::where('is_deleted', false)
+                             ->with(['user', 'story'])
+                             ->orderBy('created_at', 'desc')
+                             ->take($limit)
+                             ->get();
+
+            return $this->formatCommentsForView($comments);
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+
+    private function timeAgo($date): string
+    {
+        if (!$date) {
+            return 'unknown';
+        }
+        
+        if (is_string($date)) {
+            $date = Carbon::parse($date);
+        }
+        
+        return $date->diffForHumans();
+    }
+
+    private function generateSlug(string $title): string
+    {
+        $slug = strtolower(trim($title));
+        $slug = preg_replace('/[^a-z0-9-]/', '_', $slug);
+        $slug = preg_replace('/_+/', '_', $slug);
+        $slug = trim($slug, '_');
+        return substr($slug ?: 'untitled', 0, 50);
     }
 
     private function validateCommentData(array $data): void

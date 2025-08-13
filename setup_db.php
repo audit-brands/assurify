@@ -30,7 +30,7 @@ try {
     $capsule->bootEloquent();
     
     // Create database
-    DB::statement("CREATE DATABASE IF NOT EXISTS lobsters_slim CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+    DB::statement("CREATE DATABASE IF NOT EXISTS assurify_dev CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
     echo "Database created successfully!\n";
     
     // Now reconnect to the specific database
@@ -137,8 +137,22 @@ try {
         echo "Taggings table created!\n";
     }
     
-    // Create a test user
+    // Create admin and test users
     if (DB::table('users')->count() == 0) {
+        // Create admin user
+        DB::table('users')->insert([
+            'username' => 'admin',
+            'email' => 'admin@assurify.local',
+            'password_hash' => password_hash('admin123', PASSWORD_ARGON2ID),
+            'karma' => 1000,
+            'is_admin' => true,
+            'is_moderator' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        echo "Admin user created (username: admin, password: admin123)!\n";
+        
+        // Create regular test user
         DB::table('users')->insert([
             'username' => 'testuser',
             'email' => 'test@example.com',

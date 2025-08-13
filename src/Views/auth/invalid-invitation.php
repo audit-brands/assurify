@@ -2,7 +2,7 @@
 
 $this->layout('layout', ['title' => $title]) ?>
 
-<div class="auth-form">
+<div class="story-form">
     <h1>Invalid Invitation</h1>
     
     <div class="error-message">

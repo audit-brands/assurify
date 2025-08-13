@@ -22,44 +22,64 @@ class HomeController extends BaseController
 
     public function index(Request $request, Response $response): Response
     {
-        // Temporary: Return empty stories until database is configured
-        $stories = [];
+        try {
+            // Get stories from database
+            $stories = $this->storyService->getRecentStories();
+        } catch (\Exception $e) {
+            // Fallback to empty array if database issues
+            $stories = [];
+        }
+
+        $success = $_SESSION['story_success'] ?? null;
+        if ($success) {
+            unset($_SESSION['story_success']); // Clear after showing
+        }
 
         return $this->render($response, 'home/index', [
-            'title' => 'Lobsters',
-            'stories' => $stories
+            'title' => 'Assurify',
+            'stories' => $stories,
+            'success' => $success
         ]);
     }
 
     public function newest(Request $request, Response $response): Response
     {
-        // Temporary: Return empty stories until database is configured
-        $stories = [];
+        try {
+            $stories = $this->storyService->getNewestStories();
+        } catch (\Exception $e) {
+            $stories = [];
+        }
 
         return $this->render($response, 'home/newest', [
-            'title' => 'Newest | Lobsters',
+            'title' => 'Newest | Assurify',
             'stories' => $stories
         ]);
     }
 
     public function recent(Request $request, Response $response): Response
     {
-        // Temporary: Return empty stories until database is configured
-        $stories = [];
+        try {
+            $stories = $this->storyService->getRecentStories();
+        } catch (\Exception $e) {
+            $stories = [];
+        }
 
         return $this->render($response, 'home/recent', [
-            'title' => 'Recent | Lobsters',
+            'title' => 'Recent | Assurify',
             'stories' => $stories
         ]);
     }
 
     public function top(Request $request, Response $response): Response
     {
-        // Temporary: Return empty stories until database is configured
-        $stories = [];
+        try {
+            $stories = $this->storyService->getTopStories();
+        } catch (\Exception $e) {
+            $stories = [];
+        }
 
         return $this->render($response, 'home/top', [
-            'title' => 'Top | Lobsters',
+            'title' => 'Top | Assurify',
             'stories' => $stories
         ]);
     }

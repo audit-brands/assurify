@@ -16,6 +16,8 @@
     
     <!-- Favicons and App Icons -->
     <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/icons/icon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/icon-32x32.png">
     <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192x192.png">
     <link rel="apple-touch-icon" href="/assets/icons/icon-192x192.png">
     <link rel="apple-touch-icon" sizes="152x152" href="/assets/icons/icon-152x152.png">
@@ -29,11 +31,12 @@
     
     <!-- Microsoft Tiles -->
     <meta name="msapplication-TileImage" content="/assets/icons/icon-144x144.png">
-    <meta name="msapplication-TileColor" content="#ff6600">
+    <meta name="msapplication-TileColor" content="#dc2626">
     <meta name="msapplication-config" content="/browserconfig.xml">
     
     <!-- CSS -->
-    <link rel="stylesheet" type="text/css" href="/assets/application.css">
+    <link rel="stylesheet" type="text/css" href="/assets/application.css?v=<?=time()?>">
+    <link rel="stylesheet" type="text/css" href="/assets/voting.css?v=<?=time()?>">
     
     <!-- RSS Feeds -->
     <link rel="alternate" type="application/rss+xml" title="Assurify - Stories" href="/feeds/stories.rss">
@@ -48,17 +51,18 @@
                 </a>
                 <nav id="navigation">
                     <ul>
-                        <li><a href="/">Home</a></li>
-                        <li><a href="/newest">Newest</a></li>
-                        <li><a href="/recent">Recent</a></li>
-                        <li><a href="/top">Top</a></li>
-                        <li><a href="/tags">Tags</a></li>
-                        <li><a href="/stories">Submit</a></li>
+                        <li><a href="/active">active</a></li>
+                        <li><a href="/recent">recent</a></li>
+                        <li><a href="/comments">comments</a></li>
+                        <li><a href="/search">search</a></li>
+                        <li><a href="/stories">submit</a></li>
                     </ul>
                 </nav>
                 <div id="user-nav">
                     <?php if (isset($_SESSION['user_id'])) : ?>
                         <span>Welcome, <a href="/u/<?=$_SESSION['username']?>"><?=$this->e($_SESSION['username'])?></a></span>
+                        <a href="/messages" id="messages-link">Messages</a> |
+                        <a href="/settings">Settings</a> |
                         <a href="/invitations">Invitations</a> |
                         <form action="/auth/logout" method="post" style="display: inline;">
                             <button type="submit" class="link-button">Logout</button>
@@ -85,6 +89,41 @@
     <script src="/assets/offline.js"></script>
     <script src="/assets/pwa.js"></script>
     <script src="/assets/websocket.js"></script>
+    
+    <!-- Message notifications -->
+    <script>
+        // Check for unread messages periodically
+        <?php if (isset($_SESSION['user_id'])) : ?>
+        function updateUnreadMessageCount() {
+            fetch('/messages/unread-count')
+                .then(response => response.json())
+                .then(data => {
+                    const messagesLink = document.getElementById('messages-link');
+                    if (messagesLink) {
+                        const existingBadge = messagesLink.querySelector('.unread-badge');
+                        if (existingBadge) {
+                            existingBadge.remove();
+                        }
+                        
+                        if (data.count > 0) {
+                            const badge = document.createElement('span');
+                            badge.className = 'unread-badge';
+                            badge.textContent = data.count;
+                            messagesLink.appendChild(badge);
+                        }
+                    }
+                })
+                .catch(error => {
+                    // Silently fail - not critical
+                    console.log('Failed to fetch unread message count:', error);
+                });
+        }
+
+        // Check immediately and then every 60 seconds
+        updateUnreadMessageCount();
+        setInterval(updateUnreadMessageCount, 60000);
+        <?php endif ?>
+    </script>
     
     <!-- PWA initialization -->
     <script>

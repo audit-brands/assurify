@@ -9,7 +9,7 @@ use App\Models\Invitation;
 use Ramsey\Uuid\Uuid;
 use Illuminate\Support\Carbon;
 
-class AuthService
+class AuthService implements AuthServiceInterface
 {
     public function __construct()
     {
@@ -41,7 +41,7 @@ class AuthService
                    ->orWhere('email', $username)
                    ->first();
 
-        if (!$user || !$this->verifyPassword($password, $user->password_hash)) {
+        if (!$user || !$user->password_digest || !$this->verifyPassword($password, $user->password_digest)) {
             return null;
         }
 
@@ -78,7 +78,7 @@ class AuthService
         $user = new User();
         $user->username = $userData['username'];
         $user->email = $userData['email'];
-        $user->password_hash = $this->hashPassword($userData['password']);
+        $user->password_digest = $this->hashPassword($userData['password']);
         $user->about = $userData['about'] ?? '';
         $user->session_token = $this->generateSessionToken();
         $user->save();
@@ -97,15 +97,33 @@ class AuthService
                         ->first();
     }
 
-    public function logout(User $user): void
+    public function logout(string $sessionToken): bool
     {
-        $user->session_token = null;
-        $user->save();
+        try {
+            $user = User::where('session_token', $sessionToken)->first();
+            if ($user) {
+                $user->session_token = null;
+                $user->save();
+                return true;
+            }
+            return false;
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
     public function getUserBySessionToken(string $token): ?User
     {
         return User::where('session_token', $token)->first();
+    }
+
+    public function getUserById(int $id): ?User
+    {
+        try {
+            return User::find($id);
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     public function generatePasswordResetToken(): string

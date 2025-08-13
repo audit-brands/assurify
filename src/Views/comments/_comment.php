@@ -5,12 +5,9 @@
     <div class="comment-header">
         <div class="comment-voting">
             <?php if (isset($_SESSION['user_id']) && $_SESSION['user_id'] != $comment['user_id']) : ?>
-                <button class="vote-up" data-comment-id="<?=$comment['id']?>" data-vote="1">▲</button>
+                <button class="upvoter" data-comment-id="<?=$comment['id']?>" data-vote="1" title="Upvote"></button>
             <?php endif ?>
-            <div class="score"><?=$comment['score']?></div>
-            <?php if (isset($_SESSION['user_id']) && $_SESSION['user_id'] != $comment['user_id']) : ?>
-                <button class="vote-down" data-comment-id="<?=$comment['id']?>" data-vote="-1">▼</button>
-            <?php endif ?>
+            <span class="vote-score"><?=$comment['score']?></span>
         </div>
         
         <div class="comment-meta">

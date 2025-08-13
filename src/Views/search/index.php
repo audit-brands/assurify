@@ -1,33 +1,57 @@
 <?php $this->layout('layout', ['title' => $title]) ?>
 
-<div class="search-page">
+<div class="story-form">
     <h1>Search</h1>
     
     <form action="/search" method="get" class="search-form">
         <div class="form-group">
-            <input type="text" name="q" value="<?=$this->e($query)?>" placeholder="Search stories and comments..." class="search-input" autocomplete="off">
-            <button type="submit">Search</button>
+            <label for="q">Search:</label>
+            <input type="text" name="q" id="q" value="<?=$this->e($query)?>" placeholder="" autocomplete="off" required>
         </div>
         
-        <div class="search-options">
+        <div class="form-group">
             <label>
-                <select name="what">
-                    <option value="all" <?= $type === 'all' ? 'selected' : '' ?>>All</option>
-                    <option value="stories" <?= $type === 'stories' ? 'selected' : '' ?>>Stories</option>
-                    <option value="comments" <?= $type === 'comments' ? 'selected' : '' ?>>Comments</option>
-                </select>
+                <input type="radio" name="what" value="stories" <?= $type === 'stories' || $type === 'all' ? 'checked' : '' ?>>
+                Stories
             </label>
-            
             <label>
-                Sort by:
-                <select name="order">
-                    <option value="newest" <?= $order === 'newest' ? 'selected' : '' ?>>Newest</option>
-                    <option value="relevance" <?= $order === 'relevance' ? 'selected' : '' ?>>Relevance</option>
-                    <option value="score" <?= $order === 'score' ? 'selected' : '' ?>>Score</option>
-                </select>
+                <input type="radio" name="what" value="comments" <?= $type === 'comments' ? 'checked' : '' ?>>
+                Comments
             </label>
         </div>
+        
+        <div class="form-group">
+            <label>Order By:</label>
+            <label>
+                <input type="radio" name="order" value="newest" <?= $order === 'newest' || empty($order) ? 'checked' : '' ?>>
+                Newest
+            </label>
+            <label>
+                <input type="radio" name="order" value="relevance" <?= $order === 'relevance' ? 'checked' : '' ?>>
+                Relevance
+            </label>
+            <label>
+                <input type="radio" name="order" value="score" <?= $order === 'score' ? 'checked' : '' ?>>
+                Score
+            </label>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit">Search</button>
+        </div>
     </form>
+    
+    <div class="search-hints">
+        <h3>Search hints:</h3>
+        <ul>
+            <li>Search terms are required. Use quote marks if you want "words together"</li>
+            <li>Terms are exact, so <code>code</code> doesn't match <em>coder</em> or <em>coding</em>. You can approximate stemming with <code>cod*</code></li>
+            <li>Search titles with <code>title:kernel</code> or <code>title:"linux kernel"</code></li>
+            <li>Search by domain with <code>domain:example.com</code></li>
+            <li>Search by story submitter with <code>submitter:alice</code> or by comment author with <code>commenter:bob</code></li>
+            <li>Search by tag with <code>tag:meta</code></li>
+        </ul>
+    </div>
     
     <?php if (!$has_searched && !empty($popular_searches)) : ?>
         <div class="popular-searches">

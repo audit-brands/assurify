@@ -1,7 +1,7 @@
 // Service Worker for Assurify PWA
-const CACHE_NAME = 'assurify-v1.0.0';
-const API_CACHE_NAME = 'assurify-api-v1.0.0';
-const STATIC_CACHE_NAME = 'assurify-static-v1.0.0';
+const CACHE_NAME = 'assurify-v1.1.0';
+const API_CACHE_NAME = 'assurify-api-v1.1.0';
+const STATIC_CACHE_NAME = 'assurify-static-v1.1.0';
 
 // Files to cache immediately
 const STATIC_ASSETS = [

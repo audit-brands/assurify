@@ -60,14 +60,27 @@ class StoryController extends BaseController
         $url = $request->getQueryParams()['url'] ?? '';
 
         if ($url) {
-            $suggestedTags = $this->tagService->getSuggestedTags('', '', $url);
+            try {
+                $suggestedTags = $this->tagService->getSuggestedTags('', '', $url);
+            } catch (\Exception $e) {
+                // If tag service fails, just use empty array
+                $suggestedTags = [];
+            }
         }
 
+        // Get and clear any stored error
+        $error = $_SESSION['story_error'] ?? null;
+        unset($_SESSION['story_error']);
+
+        // Get all tags for autocomplete
+        $allTags = $this->tagService->getAllTags();
+
         return $this->render($response, 'stories/create', [
-            'title' => 'Submit Story | Lobsters',
+            'title' => 'Submit Story | Assurify',
             'url' => $url,
             'suggested_tags' => $suggestedTags,
-            'error' => $_SESSION['story_error'] ?? null,
+            'all_tags' => $allTags,
+            'error' => $error,
         ]);
     }
 
@@ -84,19 +97,38 @@ class StoryController extends BaseController
         unset($_SESSION['story_error']);
 
         try {
-            $user = \App\Models\User::find($_SESSION['user_id']);
-
             $storyData = [
-                'title' => $data['title'] ?? '',
-                'url' => $data['url'] ?? '',
-                'description' => $data['description'] ?? '',
-                'tags' => $data['tags'] ?? '',
+                'title' => trim($data['title'] ?? ''),
+                'url' => trim($data['url'] ?? ''),
+                'description' => trim($data['description'] ?? ''),
+                'tags' => trim($data['tags'] ?? ''),
                 'user_is_author' => isset($data['user_is_author']),
             ];
 
+            // Basic validation
+            if (empty($storyData['title'])) {
+                $_SESSION['story_error'] = 'Title is required';
+                return $this->redirect($response, '/stories');
+            }
+
+            if (strlen($storyData['title']) > 150) {
+                $_SESSION['story_error'] = 'Title must be 150 characters or less';
+                return $this->redirect($response, '/stories');
+            }
+
+            // Get current user
+            $user = \App\Models\User::find($_SESSION['user_id']);
+            if (!$user) {
+                $_SESSION['story_error'] = 'User not found';
+                return $this->redirect($response, '/auth/login');
+            }
+
+            // Create the story using StoryService
             $story = $this->storyService->createStory($user, $storyData);
 
-            return $this->redirect($response, "/s/{$story->short_id}/" . $this->storyService->generateSlug($story->title));
+            $_SESSION['story_success'] = 'Story "' . $storyData['title'] . '" has been submitted successfully!';
+            
+            return $this->redirect($response, '/');
         } catch (\Exception $e) {
             $_SESSION['story_error'] = $e->getMessage();
             return $this->redirect($response, '/stories');

@@ -85,7 +85,7 @@ class TagService
         }
     }
 
-    public function getAllTags(bool $includeInactive = false): array
+    public function getAllTags(string $sortBy = 'tag', string $searchQuery = '', bool $includeInactive = false): array
     {
         // Check if database connection is available
         if (!$this->isDatabaseAvailable()) {
@@ -99,12 +99,32 @@ class TagService
                 $query->where('inactive', false);
             }
 
-            $tags = $query->withCount(['stories' => function ($query) {
-                           $query->where('is_expired', false)
-                                 ->where('is_moderated', false);
-            }])
-                   ->orderBy('tag')
-                   ->get();
+            if (!empty($searchQuery)) {
+                $query->where(function ($q) use ($searchQuery) {
+                    $q->where('tag', 'LIKE', "%{$searchQuery}%")
+                      ->orWhere('description', 'LIKE', "%{$searchQuery}%");
+                });
+            }
+
+            $query->withCount(['stories' => function ($query) {
+                $query->where('is_expired', false)
+                      ->where('is_moderated', false);
+            }]);
+
+            switch ($sortBy) {
+                case 'stories':
+                    $query->orderBy('stories_count', 'desc');
+                    break;
+                case 'recent':
+                    $query->orderBy('created_at', 'desc');
+                    break;
+                case 'alphabetical':
+                default:
+                    $query->orderBy('tag');
+                    break;
+            }
+
+            $tags = $query->get();
 
             return $tags->map(function ($tag) {
                 return [
@@ -215,7 +235,7 @@ class TagService
             $tags = Tag::withCount(['stories' => function ($query) {
                           $query->where('is_expired', false)
                                 ->where('is_moderated', false)
-                                ->where('created_at', '>=', now()->subMonth()); // Stories from last month
+                                ->where('created_at', '>=', date('Y-m-d H:i:s', strtotime('-1 month'))); // Stories from last month
             }])
                       ->where('inactive', false)
                       ->orderBy('stories_count', 'desc')
@@ -299,5 +319,185 @@ class TagService
         }
 
         return $user->is_moderator || $user->is_admin;
+    }
+
+    public function getTagStats(string $tagName): array
+    {
+        if (!$this->isDatabaseAvailable()) {
+            return [
+                'total_stories' => 0,
+                'stories_this_week' => 0,
+                'stories_this_month' => 0,
+                'avg_score' => 0,
+                'top_contributors' => []
+            ];
+        }
+        
+        try {
+            $tag = $this->getTagByName($tagName);
+            if (!$tag) {
+                return [
+                    'total_stories' => 0,
+                    'stories_this_week' => 0,
+                    'stories_this_month' => 0,
+                    'avg_score' => 0,
+                    'top_contributors' => []
+                ];
+            }
+
+            $totalStories = $tag->stories()
+                ->where('is_expired', false)
+                ->where('is_moderated', false)
+                ->count();
+
+            $storiesThisWeek = $tag->stories()
+                ->where('is_expired', false)
+                ->where('is_moderated', false)
+                ->where('created_at', '>=', date('Y-m-d H:i:s', strtotime('-1 week')))
+                ->count();
+
+            $storiesThisMonth = $tag->stories()
+                ->where('is_expired', false)
+                ->where('is_moderated', false)
+                ->where('created_at', '>=', date('Y-m-d H:i:s', strtotime('-1 month')))
+                ->count();
+
+            $avgScore = $tag->stories()
+                ->where('is_expired', false)
+                ->where('is_moderated', false)
+                ->avg('score') ?? 0;
+
+            $topContributors = $tag->stories()
+                ->with('user')
+                ->where('is_expired', false)
+                ->where('is_moderated', false)
+                ->selectRaw('user_id, count(*) as story_count')
+                ->groupBy('user_id')
+                ->orderByDesc('story_count')
+                ->limit(5)
+                ->get()
+                ->map(function ($contributor) {
+                    return [
+                        'username' => $contributor->user->username ?? 'Unknown',
+                        'story_count' => $contributor->story_count
+                    ];
+                });
+
+            return [
+                'total_stories' => $totalStories,
+                'stories_this_week' => $storiesThisWeek,
+                'stories_this_month' => $storiesThisMonth,
+                'avg_score' => round($avgScore, 1),
+                'top_contributors' => $topContributors->toArray()
+            ];
+            
+        } catch (\Exception $e) {
+            error_log("Database error in getTagStats: " . $e->getMessage());
+            return [
+                'total_stories' => 0,
+                'stories_this_week' => 0,
+                'stories_this_month' => 0,
+                'avg_score' => 0,
+                'top_contributors' => []
+            ];
+        }
+    }
+
+    public function getTrendingTags(int $days = 7, int $limit = 10): array
+    {
+        if (!$this->isDatabaseAvailable()) {
+            return array_slice($this->getDefaultTags(), 0, $limit);
+        }
+        
+        try {
+            $tags = Tag::withCount(['stories' => function ($query) use ($days) {
+                          $query->where('is_expired', false)
+                                ->where('is_moderated', false)
+                                ->where('created_at', '>=', date('Y-m-d H:i:s', strtotime("-$days days")));
+            }])
+                      ->where('inactive', false)
+                      ->having('stories_count', '>', 0)
+                      ->orderBy('stories_count', 'desc')
+                      ->take($limit)
+                      ->get();
+
+            return $tags->map(function ($tag) {
+                return [
+                    'tag' => $tag->tag,
+                    'description' => $tag->description,
+                    'recent_stories' => $tag->stories_count,
+                ];
+            })->toArray();
+            
+        } catch (\Exception $e) {
+            error_log("Database error in getTrendingTags: " . $e->getMessage());
+            return array_slice($this->getDefaultTags(), 0, $limit);
+        }
+    }
+
+    public function getRelatedTags(string $tagName, int $limit = 10): array
+    {
+        if (!$this->isDatabaseAvailable()) {
+            return [];
+        }
+        
+        try {
+            $tag = $this->getTagByName($tagName);
+            if (!$tag) {
+                return [];
+            }
+
+            // Find tags that appear together with this tag on stories
+            $relatedTags = Tag::whereIn('id', function ($query) use ($tag) {
+                $query->select('tag_id')
+                      ->from('taggings as t1')
+                      ->join('taggings as t2', 't1.story_id', '=', 't2.story_id')
+                      ->where('t2.tag_id', $tag->id)
+                      ->where('t1.tag_id', '!=', $tag->id)
+                      ->groupBy('t1.tag_id')
+                      ->orderByRaw('COUNT(*) DESC');
+            })
+            ->withCount(['stories' => function ($query) {
+                $query->where('is_expired', false)
+                      ->where('is_moderated', false);
+            }])
+            ->where('inactive', false)
+            ->take($limit)
+            ->get();
+
+            return $relatedTags->map(function ($relatedTag) {
+                return [
+                    'tag' => $relatedTag->tag,
+                    'description' => $relatedTag->description,
+                    'story_count' => $relatedTag->stories_count,
+                ];
+            })->toArray();
+            
+        } catch (\Exception $e) {
+            error_log("Database error in getRelatedTags: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function getTagCategories(): array
+    {
+        return [
+            'Technology' => [
+                'tags' => ['programming', 'web', 'mobile', 'ai', 'security', 'database'],
+                'description' => 'Technology and programming related topics'
+            ],
+            'Business' => [
+                'tags' => ['startups', 'business', 'marketing', 'finance', 'jobs'],
+                'description' => 'Business and career topics'
+            ],
+            'Science' => [
+                'tags' => ['science', 'research', 'math', 'physics', 'biology'],
+                'description' => 'Scientific research and discoveries'
+            ],
+            'Culture' => [
+                'tags' => ['culture', 'art', 'music', 'books', 'education'],
+                'description' => 'Arts, culture, and educational content'
+            ]
+        ];
     }
 }

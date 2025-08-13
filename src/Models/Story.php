@@ -19,33 +19,47 @@ class Story extends Model
         'url',
         'score',
         'flags',
-        'is_expired',
+        'is_deleted',
         'is_moderated',
         'markeddown_description',
-        'story_cache',
         'comments_count',
         'created_at',
-        'upvotes',
-        'downvotes',
-        'is_unavailable',
+        'updated_at',
+        'last_edited_at',
         'unavailable_at',
         'twitter_id',
         'user_is_author',
-        'merged_story_id'
+        'merged_story_id',
+        'domain_id',
+        'mastodon_id',
+        'origin_id',
+        'last_comment_at',
+        'stories_count',
+        'token',
+        'normalized_url',
+        'hotness',
+        'user_is_following'
     ];
 
     protected $casts = [
         'user_id' => 'integer',
         'score' => 'integer',
         'flags' => 'integer',
-        'is_expired' => 'boolean',
+        'is_deleted' => 'boolean',
         'is_moderated' => 'boolean',
         'comments_count' => 'integer',
-        'upvotes' => 'integer',
-        'downvotes' => 'integer',
-        'is_unavailable' => 'boolean',
         'user_is_author' => 'boolean',
-        'merged_story_id' => 'integer'
+        'merged_story_id' => 'integer',
+        'domain_id' => 'integer',
+        'origin_id' => 'integer',
+        'stories_count' => 'integer',
+        'hotness' => 'float',
+        'user_is_following' => 'boolean',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'last_edited_at' => 'datetime',
+        'unavailable_at' => 'datetime',
+        'last_comment_at' => 'datetime'
     ];
 
     public function user(): BelongsTo

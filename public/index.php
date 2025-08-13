@@ -20,6 +20,14 @@ $containerBuilder->addDefinitions(__DIR__ . '/../config/dependencies.php');
 
 $container = $containerBuilder->build();
 
+// Initialize database connection early
+try {
+    $container->get(\Illuminate\Database\Capsule\Manager::class);
+} catch (\Exception $e) {
+    // Database connection failed, continue without database
+    error_log("Database initialization failed: " . $e->getMessage());
+}
+
 // Create App
 AppFactory::setContainer($container);
 $app = AppFactory::create();

@@ -47,7 +47,7 @@ class SearchAnalytic extends Model
     {
         return static::select('query_normalized')
             ->selectRaw('COUNT(*) as search_count')
-            ->where('created_at', '>=', now()->subDays($days))
+            ->where('created_at', '>=', date('Y-m-d H:i:s', strtotime("-{$days} days")))
             ->whereNotNull('query_normalized')
             ->where('query_normalized', '!=', '')
             ->groupBy('query_normalized')
@@ -64,15 +64,15 @@ class SearchAnalytic extends Model
     {
         $recentQueries = static::select('query_normalized')
             ->selectRaw('COUNT(*) as recent_count')
-            ->where('created_at', '>=', now()->subDays(3))
+            ->where('created_at', '>=', date('Y-m-d H:i:s', strtotime('-3 days')))
             ->groupBy('query_normalized')
             ->having('recent_count', '>=', 5) // Minimum threshold
             ->pluck('recent_count', 'query_normalized');
 
         $historicalQueries = static::select('query_normalized')
             ->selectRaw('COUNT(*) as historical_count')
-            ->where('created_at', '>=', now()->subDays(30))
-            ->where('created_at', '<', now()->subDays(3))
+            ->where('created_at', '>=', date('Y-m-d H:i:s', strtotime('-30 days')))
+            ->where('created_at', '<', date('Y-m-d H:i:s', strtotime('-3 days')))
             ->groupBy('query_normalized')
             ->pluck('historical_count', 'query_normalized');
 
@@ -95,7 +95,7 @@ class SearchAnalytic extends Model
      */
     public static function getSearchStats(int $days = 30): array
     {
-        $startDate = now()->subDays($days);
+        $startDate = date('Y-m-d H:i:s', strtotime("-{$days} days"));
 
         $totalSearches = static::where('created_at', '>=', $startDate)->count();
         
@@ -137,7 +137,7 @@ class SearchAnalytic extends Model
     {
         return static::select('query_normalized')
             ->selectRaw('COUNT(*) as failure_count')
-            ->where('created_at', '>=', now()->subDays($days))
+            ->where('created_at', '>=', date('Y-m-d H:i:s', strtotime("-{$days} days")))
             ->where('results_count', 0)
             ->groupBy('query_normalized')
             ->orderByDesc('failure_count')

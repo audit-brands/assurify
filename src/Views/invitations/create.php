@@ -1,6 +1,6 @@
 <?php $this->layout('layout', ['title' => $title]) ?>
 
-<div class="invitations-form">
+<div class="story-form">
     <h1>Send Invitation</h1>
     
     <?php if ($error) : ?>
@@ -29,7 +29,7 @@
         
         <div class="form-actions">
             <button type="submit">Send Invitation</button>
-            <a href="/invitations" class="btn-secondary">Cancel</a>
+            <a href="/invitations" class="cancel">Cancel</a>
         </div>
     </form>
     

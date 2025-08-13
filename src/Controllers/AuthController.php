@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Services\AuthService;
+use App\Services\AuthServiceInterface;
 use App\Services\InvitationService;
 use App\Services\EmailService;
 use Psr\Http\Message\ResponseInterface as Response;
@@ -15,7 +16,7 @@ class AuthController extends BaseController
 {
     public function __construct(
         Engine $templates,
-        private AuthService $authService,
+        private AuthServiceInterface $authService,
         private InvitationService $invitationService,
         private EmailService $emailService
     ) {
@@ -30,7 +31,7 @@ class AuthController extends BaseController
         }
 
         return $this->render($response, 'auth/login', [
-            'title' => 'Login | Lobsters',
+            'title' => 'Login | Assurify',
             'error' => $_SESSION['login_error'] ?? null,
         ]);
     }
