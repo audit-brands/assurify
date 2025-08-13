@@ -444,7 +444,7 @@ header#subnav a.current_page:last-child {
 	margin-right: 0.375rem;
 }
 header a.current_page {
-	border-bottom: 0.25em solid var(--color-fg-accent);
+	border-bottom: 0.25em solid var(--color-accent);
 	padding: 0 0.25rem 0.25rem;
 }
 header#nav #logo, header#nav #logo ~ a {
@@ -454,7 +454,7 @@ header#nav a:last-child {
 	margin-right: 0;
 }
 header .inbox_unread {
-	color: var(--color-fg-accent);
+	color: var(--color-accent);
 }
 
 #inside {
@@ -540,25 +540,8 @@ div.voters {
 	width: 40px;
 }
 
-.upvoter:before {
-	content: "\25b2";
-	color: transparent;
-	font-size: 1.2rem;
-	-webkit-text-stroke: 1px var(--color-fg-contrast-4-5);
-}
-.upvoted .upvoter:before, .upvoter:hover:before {
-	color: var(--color-fg-accent);
-	-webkit-text-stroke: 1px var(--color-fg-accent);
-}
-.upvoter {
-	color: var(--color-fg-contrast-4-5);
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-self: center;
-	text-decoration: none;
-	font-size: 9.5pt;
-}
+/* Upvoter triangle styles moved to voting.css */
+/* Upvoter styles moved to voting.css */
 .upvoter:focus { outline: none; } /* don't outline after upvote click */
 .upvoter:focus-visible { outline: 2px solid var(--color-fg-link); } /* do outline when tabbing */
 
@@ -1054,7 +1037,7 @@ div.comment_form_container textarea {
 }
 
 .comment_unread {
-	color: var(--color-fg-accent);
+	color: var(--color-accent);
 	font-weight: 600;
 	cursor: pointer;
 }
@@ -1141,13 +1124,13 @@ td.warned div, td.unwarned div {
 /* /mod dashbaord */
 
 .mod {
-	color: var(--color-fg-accent);
+	color: var(--color-accent);
 }
 .modmodlog .mod td:first-child {
-	border-left: 2pt solid var(--color-fg-accent);
+	border-left: 2pt solid var(--color-accent);
 }
 .nominal {
-	color: var(--color-fg-accent);
+	color: var(--color-accent);
 	font-size: 2em;
 	text-align: center;
 }
@@ -1741,16 +1724,7 @@ input[type="submit"].link_post.pushover_button {
 		margin-left: 35px;
 	}
 
-	/* explicitly reset color when not upvoted, since previously-upvoted arrow
-	 * will still be triggering :hover until next tap */
-	div.voters .upvoter:hover:before {
-		color: transparent;
-		-webkit-text-stroke: 1px var(--color-fg-contrast-4-5);
-	}
-	.upvoted div.voters .upvoter:before {
-		color: var(--color-fg-accent);
-		-webkit-text-stroke: 1px var(--color-fg-accent);
-	}
+	/* Mobile upvoter styles handled in voting.css */
 
 	ol.stories.list {
 		margin-top: 0;
@@ -2773,7 +2747,7 @@ img.image-error::after {
 }
 
 .badge.admin {
-	background: var(--color-fg-accent);
+	background: var(--color-accent);
 	color: white;
 }
 
@@ -3126,7 +3100,7 @@ img.image-error::after {
 }
 
 .tag-suggestion.auto-suggested {
-	background: var(--color-fg-accent);
+	background: var(--color-accent);
 }
 
 .tags-input-container {
