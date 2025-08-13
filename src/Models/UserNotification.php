@@ -274,7 +274,7 @@ class UserNotification extends Model
     public static function cleanupOldNotifications(int $daysOld = 30): int
     {
         return self::where('is_read', true)
-                  ->where('created_at', '<', now()->subDays($daysOld))
+                  ->where('created_at', '<', date('Y-m-d H:i:s', strtotime("-{$daysOld} days")))
                   ->delete();
     }
 
@@ -306,7 +306,7 @@ class UserNotification extends Model
      */
     public function getTimeAgo(): string
     {
-        $now = now();
+        $now = new \DateTime();
         $diff = $this->created_at->diff($now);
 
         if ($diff->days > 7) {

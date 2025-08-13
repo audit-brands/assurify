@@ -199,7 +199,7 @@ class UserProfile extends Model
      */
     public function updateLastActive(): void
     {
-        $this->last_active_at = now();
+        $this->last_active_at = date('Y-m-d H:i:s');
         $this->save();
     }
 
@@ -253,7 +253,7 @@ class UserProfile extends Model
         $score += $this->following_count;
         
         // Activity recency bonus
-        if ($this->last_active_at && $this->last_active_at->diffInDays(now()) < 30) {
+        if ($this->last_active_at && (time() - strtotime($this->last_active_at)) < (30 * 24 * 60 * 60)) {
             $score *= 1.1; // 10% bonus for recent activity
         }
         

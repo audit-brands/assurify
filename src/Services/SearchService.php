@@ -1037,7 +1037,7 @@ class SearchService
                 'search_time_ms' => round($searchTimeMs, 2),
                 'ip_address' => $_SERVER['REMOTE_ADDR'] ?? null,
                 'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
-                'created_at' => now()
+                'created_at' => date('Y-m-d H:i:s')
             ]);
         } catch (\Exception $e) {
             // Log error but don't fail the search

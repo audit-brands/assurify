@@ -155,7 +155,7 @@ class UserBookmark extends Model
      */
     public function markAsRead(): void
     {
-        $this->read_at = now();
+        $this->read_at = date('Y-m-d H:i:s');
         $this->save();
     }
 

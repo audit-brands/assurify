@@ -124,7 +124,7 @@ class ModerationService
                     
                 case 'delete':
                     $story->is_deleted = true;
-                    $story->deleted_at = now();
+                    $story->deleted_at = date('Y-m-d H:i:s');
                     $story->deleted_by = $moderator->id;
                     break;
                     
@@ -169,7 +169,7 @@ class ModerationService
                     
                 case 'delete':
                     $comment->is_deleted = true;
-                    $comment->deleted_at = now();
+                    $comment->deleted_at = date('Y-m-d H:i:s');
                     $comment->deleted_by = $moderator->id;
                     break;
                     
@@ -206,12 +206,12 @@ class ModerationService
                 return false;
             }
 
-            $user->banned_at = now();
+            $user->banned_at = date('Y-m-d H:i:s');
             $user->banned_by = $moderator->id;
             $user->ban_reason = $reason;
             
             if ($durationDays > 0) {
-                $user->banned_until = now()->addDays($durationDays);
+                $user->banned_until = date('Y-m-d H:i:s', strtotime("+{$durationDays} days"));
             }
             
             $user->save();
