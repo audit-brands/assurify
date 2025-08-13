@@ -8,7 +8,27 @@ But I make an unprincipled exception for :has because it solves so many big prob
 */
 
 :root {
-	/* common color scheme */
+	/* Assurify Dark Theme - Black background, white text, blue links, red accents */
+	
+	/* Base colors */
+	--base-bg: 0 0 0; /* Black background */
+	--base-fg: 255 255 255; /* White text */
+	
+	/* Opacity levels for contrast */
+	--opacity-fg: 1.0;
+	--opacity-fg-contrast-13: 0.87;
+	--opacity-fg-contrast-10: 0.75;
+	--opacity-fg-contrast-7-5: 0.6;
+	--opacity-fg-contrast-6: 0.5;
+	--opacity-fg-contrast-5: 0.4;
+	--opacity-fg-contrast-4-5: 0.35;
+	--opacity-gradient-lit: 0.9;
+	--opacity-gradient-shadowed: 0.7;
+	--opacity-shadow-80: 0.8;
+	--opacity-shadow-25: 0.25;
+	--opacity-shadow-10: 0.1;
+	
+	/* Applied color scheme */
 	--color-bg: rgb(var(--base-bg));
 	--color-bg-50: rgb(var(--base-bg) / 50%);
 
@@ -23,10 +43,27 @@ But I make an unprincipled exception for :has because it solves so many big prob
 	--color-fg-gradient-lit: rgb(var(--base-fg) / var(--opacity-gradient-lit));
 	--color-fg-gradient-shadowed: rgb(var(--base-fg) / var(--opacity-gradient-shadowed));
 
+	/* Links - Blue theme */
+	--color-fg-link: #4a9eff; /* Bright blue for links */
+	--color-fg-link-visited: #b19cd9; /* Purple for visited links */
+	--color-fg-link-hover: #6bb6ff; /* Lighter blue on hover */
+
+	/* Red accent colors */
+	--color-accent: #ff4444; /* Bright red for accents */
+	--color-accent-hover: #ff6666; /* Lighter red on hover */
+	--color-accent-dark: #cc3333; /* Darker red for borders */
+
+	/* Tag colors */
+	--color-tag-bg: #333333;
+	--color-tag-border: #555555;
+	--color-tag-media-bg: #2c2c54;
+	--color-tag-media-border: #40407a;
+
+	/* Utility colors */
 	--base-light: 255 255 255;
 	--color-light-25: rgb(var(--base-light) / 25%);
 
-	--base-shadow: 0 0 0;
+	--base-shadow: 255 255 255; /* White shadows on dark background */
 	--color-shadow: rgb(var(--base-shadow));
 	--color-shadow-80: rgb(var(--base-shadow) / var(--opacity-shadow-80));
 	--color-shadow-25: rgb(var(--base-shadow) / var(--opacity-shadow-25));
@@ -61,6 +98,12 @@ body {
 a {
 	color: var(--color-fg-link);
 	cursor: pointer;
+	text-decoration: none;
+}
+
+a:hover {
+	color: var(--color-fg-link-hover);
+	text-decoration: underline;
 }
 
 li.story div.details span.link a:visited {
@@ -341,7 +384,7 @@ header {
 .logo-text {
 	font-size: 28px;
 	font-weight: bold;
-	color: #ff6600;
+	color: var(--color-accent);
 	font-family: "Arial Black", "Helvetica Neue", Arial, sans-serif;
 	letter-spacing: -1px;
 	text-decoration: none;
@@ -349,7 +392,7 @@ header {
 }
 
 .logo:hover .logo-text {
-	color: #e55a00;
+	color: var(--color-accent-hover);
 }
 
 /* Responsive logo sizing */
@@ -2055,6 +2098,55 @@ body.offline::before {
 		image-rendering: -webkit-optimize-contrast;
 		image-rendering: crisp-edges;
 	}
+}
+
+/* Additional dark theme enhancements */
+input[type="text"], 
+input[type="email"], 
+input[type="password"], 
+input[type="url"],
+textarea, 
+select {
+	background-color: #222222;
+	border: 1px solid #444444;
+	color: var(--color-fg);
+}
+
+input[type="text"]:focus, 
+input[type="email"]:focus, 
+input[type="password"]:focus, 
+input[type="url"]:focus,
+textarea:focus {
+	border-color: var(--color-accent);
+	outline: none;
+	box-shadow: 0 0 3px var(--color-accent);
+}
+
+button, 
+input[type="submit"] {
+	background-color: var(--color-accent);
+	border: 1px solid var(--color-accent-dark);
+	color: white;
+	padding: 8px 16px;
+	border-radius: 4px;
+	cursor: pointer;
+}
+
+button:hover, 
+input[type="submit"]:hover {
+	background-color: var(--color-accent-hover);
+}
+
+/* Dark theme for error pages and notifications */
+.notification-prompt {
+	background: #1a1a1a !important;
+	border-color: #444444 !important;
+	color: var(--color-fg) !important;
+}
+
+.notification-prompt button.primary {
+	background: var(--color-accent) !important;
+	border-color: var(--color-accent-dark) !important;
 }
 
 /* Dark mode support for PWA */

@@ -5,7 +5,7 @@
     <title><?=$this->e($title ?? 'Assurify')?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Advanced community platform for secure discussions, content sharing, and professional networking">
-    <meta name="theme-color" content="#ff6600">
+    <meta name="theme-color" content="#ff4444">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
