@@ -1,43 +1,45 @@
 <?php $this->layout('layout', ['title' => $title]) ?>
 
+<link rel="stylesheet" type="text/css" href="/assets/search.css">
+
 <div class="story-form">
     <h1>Search</h1>
     
     <form action="/search" method="get" class="search-form">
-        <div class="form-group">
-            <label for="q">Search:</label>
-            <input type="text" name="q" id="q" value="<?=$this->e($query)?>" placeholder="" autocomplete="off" required>
-        </div>
-        
-        <div class="form-group">
-            <label>
-                <input type="radio" name="what" value="stories" <?= $type === 'stories' || $type === 'all' ? 'checked' : '' ?>>
-                Stories
-            </label>
-            <label>
-                <input type="radio" name="what" value="comments" <?= $type === 'comments' ? 'checked' : '' ?>>
-                Comments
-            </label>
-        </div>
-        
-        <div class="form-group">
-            <label>Order By:</label>
-            <label>
-                <input type="radio" name="order" value="newest" <?= $order === 'newest' || empty($order) ? 'checked' : '' ?>>
-                Newest
-            </label>
-            <label>
-                <input type="radio" name="order" value="relevance" <?= $order === 'relevance' ? 'checked' : '' ?>>
-                Relevance
-            </label>
-            <label>
-                <input type="radio" name="order" value="score" <?= $order === 'score' ? 'checked' : '' ?>>
-                Score
-            </label>
-        </div>
-
-        <div class="form-actions">
+        <div class="search-input-row">
+            <input type="text" name="q" id="q" value="<?=$this->e($query)?>" placeholder="Search stories and comments" autocomplete="off" required>
             <button type="submit">Search</button>
+        </div>
+        
+        <div class="search-options-row">
+            <span class="search-radio-group">
+                <label>
+                    <input type="radio" name="what" value="stories" <?= $type === 'stories' || $type === 'all' ? 'checked' : '' ?>>
+                    Stories
+                </label>
+                <label>
+                    <input type="radio" name="what" value="comments" <?= $type === 'comments' ? 'checked' : '' ?>>
+                    Comments
+                </label>
+            </span>
+        </div>
+        
+        <div class="order-options-row">
+            <span class="order-label">Order by:</span>
+            <span class="order-radio-group">
+                <label>
+                    <input type="radio" name="order" value="newest" <?= $order === 'newest' || empty($order) ? 'checked' : '' ?>>
+                    Newest
+                </label>
+                <label>
+                    <input type="radio" name="order" value="relevance" <?= $order === 'relevance' ? 'checked' : '' ?>>
+                    Relevance
+                </label>
+                <label>
+                    <input type="radio" name="order" value="score" <?= $order === 'score' ? 'checked' : '' ?>>
+                    Score
+                </label>
+            </span>
         </div>
     </form>
     
@@ -173,12 +175,12 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Auto-submit form when options change
+    // Auto-submit form when radio button options change
     const form = document.querySelector('.search-form');
-    const selects = form.querySelectorAll('select');
+    const radios = form.querySelectorAll('input[type="radio"]');
     
-    selects.forEach(select => {
-        select.addEventListener('change', function() {
+    radios.forEach(radio => {
+        radio.addEventListener('change', function() {
             if (form.querySelector('input[name="q"]').value.trim()) {
                 form.submit();
             }

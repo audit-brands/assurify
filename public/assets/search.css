@@ -1,0 +1,186 @@
+/* Search Page Layout - Lobsters Style */
+
+.search-form {
+    margin-bottom: 2em;
+}
+
+/* Search input row with inline button */
+.search-input-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    margin-bottom: 0.75em;
+}
+
+.search-input-row input[type="text"] {
+    flex: 1;
+    padding: 0.5em;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    min-width: 0;
+}
+
+.search-input-row button {
+    padding: 0.5em 1em;
+    background: #ff4444;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.search-input-row button:hover {
+    background: #cc3333;
+}
+
+/* Search options row - Stories/Comments radio buttons */
+.search-options-row {
+    margin-bottom: 0.5em;
+}
+
+.search-radio-group {
+    display: flex;
+    align-items: center;
+    gap: 1em;
+}
+
+.search-radio-group label {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    font-weight: normal;
+    cursor: pointer;
+    margin: 0;
+}
+
+.search-radio-group input[type="radio"] {
+    margin-right: 0.25em;
+    margin-left: 0;
+}
+
+/* Order by options row */
+.order-options-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    margin-bottom: 1em;
+}
+
+.order-label {
+    font-size: 14px;
+    font-weight: bold;
+    margin-right: 0.5em;
+}
+
+.order-radio-group {
+    display: flex;
+    align-items: center;
+    gap: 1em;
+}
+
+.order-radio-group label {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    font-weight: normal;
+    cursor: pointer;
+    margin: 0;
+}
+
+.order-radio-group input[type="radio"] {
+    margin-right: 0.25em;
+    margin-left: 0;
+}
+
+/* Search hints styling */
+.search-hints {
+    background: #f5f5f5;
+    padding: 1em;
+    border-radius: 3px;
+    margin-top: 2em;
+    font-size: 13px;
+}
+
+.search-hints h3 {
+    margin: 0 0 0.5em 0;
+    font-size: 14px;
+}
+
+.search-hints ul {
+    margin: 0;
+    padding-left: 1.5em;
+}
+
+.search-hints li {
+    margin-bottom: 0.25em;
+}
+
+.search-hints code {
+    background: #e8e8e8;
+    padding: 0.1em 0.3em;
+    border-radius: 2px;
+    font-family: monospace;
+}
+
+/* Popular searches */
+.popular-searches {
+    margin-top: 1.5em;
+}
+
+.popular-searches h3 {
+    margin: 0 0 0.5em 0;
+    font-size: 14px;
+}
+
+.search-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5em;
+}
+
+.search-tag {
+    background: #e8e8e8;
+    color: #333;
+    padding: 0.25em 0.5em;
+    text-decoration: none;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.search-tag:hover {
+    background: #ddd;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 600px) {
+    .search-input-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5em;
+    }
+    
+    .search-input-row button {
+        align-self: flex-start;
+        width: auto;
+    }
+    
+    .search-radio-group,
+    .order-radio-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5em;
+    }
+    
+    .order-options-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5em;
+    }
+    
+    .order-label {
+        margin-right: 0;
+    }
+}
