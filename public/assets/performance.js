@@ -446,42 +446,51 @@ class PerformanceManager {
     }
 
     monitorCoreWebVitals() {
-        // Largest Contentful Paint (LCP)
         if ('PerformanceObserver' in window) {
-            try {
-                new PerformanceObserver((entryList) => {
-                    const entries = entryList.getEntries();
-                    const lastEntry = entries[entries.length - 1];
-                    console.log('LCP:', lastEntry.startTime);
-                }).observe({ entryTypes: ['largest-contentful-paint'] });
-            } catch (e) {
-                console.log('LCP monitoring not supported');
+            // Check supported entry types first
+            const supportedEntryTypes = PerformanceObserver.supportedEntryTypes || [];
+            
+            // Largest Contentful Paint (LCP)
+            if (supportedEntryTypes.includes('largest-contentful-paint')) {
+                try {
+                    new PerformanceObserver((entryList) => {
+                        const entries = entryList.getEntries();
+                        const lastEntry = entries[entries.length - 1];
+                        console.log('LCP:', lastEntry.startTime);
+                    }).observe({ entryTypes: ['largest-contentful-paint'] });
+                } catch (e) {
+                    console.log('LCP monitoring failed:', e.message);
+                }
             }
 
             // First Input Delay (FID)
-            try {
-                new PerformanceObserver((entryList) => {
-                    entryList.getEntries().forEach(entry => {
-                        console.log('FID:', entry.processingStart - entry.startTime);
-                    });
-                }).observe({ entryTypes: ['first-input'] });
-            } catch (e) {
-                console.log('FID monitoring not supported');
+            if (supportedEntryTypes.includes('first-input')) {
+                try {
+                    new PerformanceObserver((entryList) => {
+                        entryList.getEntries().forEach(entry => {
+                            console.log('FID:', entry.processingStart - entry.startTime);
+                        });
+                    }).observe({ entryTypes: ['first-input'] });
+                } catch (e) {
+                    console.log('FID monitoring failed:', e.message);
+                }
             }
 
             // Cumulative Layout Shift (CLS)
-            try {
-                new PerformanceObserver((entryList) => {
-                    let cumulativeScore = 0;
-                    entryList.getEntries().forEach(entry => {
-                        if (!entry.hadRecentInput) {
-                            cumulativeScore += entry.value;
-                        }
-                    });
-                    console.log('CLS:', cumulativeScore);
-                }).observe({ entryTypes: ['layout-shift'] });
-            } catch (e) {
-                console.log('CLS monitoring not supported');
+            if (supportedEntryTypes.includes('layout-shift')) {
+                try {
+                    new PerformanceObserver((entryList) => {
+                        let cumulativeScore = 0;
+                        entryList.getEntries().forEach(entry => {
+                            if (!entry.hadRecentInput) {
+                                cumulativeScore += entry.value;
+                            }
+                        });
+                        console.log('CLS:', cumulativeScore);
+                    }).observe({ entryTypes: ['layout-shift'] });
+                } catch (e) {
+                    console.log('CLS monitoring failed:', e.message);
+                }
             }
         }
     }
