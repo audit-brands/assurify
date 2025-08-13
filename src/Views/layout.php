@@ -44,7 +44,7 @@
         <header id="header">
             <div class="header-content">
                 <a href="/" class="logo">
-                    <img src="/assets/logo.png" alt="Assurify" width="50" height="50">
+                    <span class="logo-text">Assurify</span>
                 </a>
                 <nav id="navigation">
                     <ul>
