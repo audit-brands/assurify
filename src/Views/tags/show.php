@@ -42,6 +42,7 @@
                             <button class="upvoter" data-story-id="<?=$story['id']?>" data-vote="1" title="Upvote"></button>
                             <span class="vote-score"><?=$story['score']?></span>
                         <?php else : ?>
+                            <span class="upvoter-guest" title="Login to vote"></span>
                             <span class="vote-score-guest"><?=$story['score']?></span>
                         <?php endif ?>
                     </div>
@@ -93,6 +94,14 @@
 <script>
 // Handle story voting (upvote only - Lobsters style)
 document.addEventListener('DOMContentLoaded', function() {
+    // Handle guest upvoter clicks - redirect to login
+    document.querySelectorAll('.upvoter-guest').forEach(element => {
+        element.addEventListener('click', function() {
+            window.location.href = '/auth/login';
+        });
+    });
+
+    // Handle authenticated user voting
     document.querySelectorAll('.upvoter').forEach(button => {
         button.addEventListener('click', function() {
             const storyId = this.dataset.storyId;

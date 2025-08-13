@@ -24,7 +24,7 @@
     display: block;
 }
 
-.upvoter:before {
+.upvoter:before, .upvoter-guest:before {
     content: "\25B2";  /* Unicode triangle up */
     color: rgba(255, 255, 255, 0.4);  /* Fallback for dark theme */
     font-size: 16px;
@@ -32,9 +32,21 @@
     line-height: 1;
 }
 
+/* Guest upvoter - visible and clickable (redirects to login) */
+.upvoter-guest {
+    padding: 0;
+    line-height: 1;
+    display: block;
+    cursor: pointer;
+}
+
 .upvoted .upvoter:before, 
 .upvoter:hover:before {
     color: #ff4444;  /* Red accent color */
+}
+
+.upvoter-guest:hover:before {
+    color: rgba(255, 255, 255, 0.6);  /* Slightly brighter on hover for guests */
 }
 
 .vote-score, .vote-score-guest {
