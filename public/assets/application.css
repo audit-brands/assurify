@@ -447,7 +447,11 @@ header a.current_page {
 	border-bottom: 0.25em solid var(--color-accent);
 	padding: 0 0.25rem 0.25rem;
 }
-header#nav #logo, header#nav #logo ~ a {
+header#nav #logo {
+	margin-left: 0;
+	margin-right: 2rem; /* Add space between logo and navigation links */
+}
+header#nav #logo ~ a {
 	margin-left: 0;
 }
 header#nav a:last-child {
