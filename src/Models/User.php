@@ -189,4 +189,105 @@ class User extends Model
                    ->where('deleted_by_recipient', false)
                    ->count();
     }
+
+    // Phase 6 Advanced Features Relations
+
+    // User extended profile
+    public function profile(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(UserProfile::class);
+    }
+
+    // User activities
+    public function activities(): HasMany
+    {
+        return $this->hasMany(UserActivity::class);
+    }
+
+    // Users this user is following
+    public function following(): HasMany
+    {
+        return $this->hasMany(UserFollow::class, 'follower_user_id');
+    }
+
+    // Users following this user
+    public function followers(): HasMany
+    {
+        return $this->hasMany(UserFollow::class, 'following_user_id');
+    }
+
+    // User bookmarks
+    public function bookmarks(): HasMany
+    {
+        return $this->hasMany(UserBookmark::class);
+    }
+
+    // User collections
+    public function collections(): HasMany
+    {
+        return $this->hasMany(UserCollection::class);
+    }
+
+    // User notifications
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(UserNotification::class);
+    }
+
+    // Advanced feature helper methods
+
+    /**
+     * Get or create user profile
+     */
+    public function getProfile(): UserProfile
+    {
+        if (!$this->profile) {
+            $this->profile()->create([
+                'display_name' => $this->username,
+                'profile_visibility' => 'public',
+                'allow_messages_from' => 'members',
+                'email_on_mention' => true,
+                'email_on_reply' => true,
+                'email_on_follow' => false,
+                'push_on_mention' => true,
+                'push_on_reply' => true,
+                'push_on_follow' => true
+            ]);
+            $this->load('profile');
+        }
+        
+        return $this->profile;
+    }
+
+    /**
+     * Check if this user is following another user
+     */
+    public function isFollowing(int $userId): bool
+    {
+        return UserFollow::isFollowing($this->id, $userId);
+    }
+
+    /**
+     * Get unread notification count
+     */
+    public function getUnreadNotificationCount(): int
+    {
+        return UserNotification::getUnreadCount($this->id);
+    }
+
+    /**
+     * Check if user has bookmarked a story
+     */
+    public function hasBookmarked(int $storyId): bool
+    {
+        return UserBookmark::isBookmarked($this->id, $storyId);
+    }
+
+    /**
+     * Get user's activity feed
+     */
+    public function getActivityFeed(int $limit = 50)
+    {
+        return UserActivity::getFeedForUser($this->id, $limit);
+    }
 }
