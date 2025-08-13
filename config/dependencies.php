@@ -39,16 +39,21 @@ return [
         try {
             $capsule->addConnection([
                 'driver' => 'mysql',
-                'host' => $_ENV['DB_HOST'],
-                'port' => $_ENV['DB_PORT'],
-                'database' => $_ENV['DB_DATABASE'],
-                'username' => $_ENV['DB_USERNAME'],
-                'password' => $_ENV['DB_PASSWORD'],
+                'host' => $_ENV['DB_HOST'] ?? 'localhost',
+                'port' => $_ENV['DB_PORT'] ?? '3306',
+                'database' => $_ENV['DB_DATABASE'] ?? 'lobsters_slim',
+                'username' => $_ENV['DB_USERNAME'] ?? 'root',
+                'password' => $_ENV['DB_PASSWORD'] ?? '',
                 'charset' => 'utf8mb4',
                 'collation' => 'utf8mb4_unicode_ci',
                 'prefix' => '',
-                'strict' => true,
+                'strict' => false, // Set to false for compatibility
                 'engine' => null,
+                'options' => [
+                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+                    \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+                    \PDO::ATTR_EMULATE_PREPARES => false,
+                ]
             ]);
             
             $capsule->setAsGlobal();
@@ -58,8 +63,14 @@ return [
             $capsule->getConnection()->getPdo();
             
         } catch (\Exception $e) {
-            // Database connection failed - set up a null connection resolver
-            // This prevents Eloquent from trying to use the database
+            // Log the database connection error
+            error_log("Database connection failed: " . $e->getMessage());
+            
+            // For development, we can continue without database
+            // In production, this should throw an exception
+            if ($_ENV['APP_ENV'] === 'production') {
+                throw new \Exception("Database connection required in production: " . $e->getMessage());
+            }
         }
         
         return $capsule;
