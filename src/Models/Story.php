@@ -86,4 +86,38 @@ class Story extends Model
     {
         return $this->hasMany(Tagging::class);
     }
+
+    /**
+     * Check if story can be edited by user (following Lobste.rs rules)
+     * - Only author can edit within 6 hours of creation
+     * - Moderators can edit anytime
+     * - Cannot edit if story is moderated
+     */
+    public function isEditableByUser(?User $user): bool
+    {
+        if (!$user || $user->id === null) {
+            return false;
+        }
+
+        // Moderators and admins can always edit
+        if ($user->is_moderator || $user->is_admin) {
+            return true;
+        }
+
+        // Only story author can edit
+        if ($user->id !== $this->user_id) {
+            return false;
+        }
+
+        // Cannot edit if story is moderated
+        if ($this->is_moderated) {
+            return false;
+        }
+
+        // Can only edit within 6 hours (360 minutes) of creation
+        $sixHoursAgo = new \DateTime();
+        $sixHoursAgo->modify('-6 hours');
+        
+        return $this->created_at > $sixHoursAgo;
+    }
 }

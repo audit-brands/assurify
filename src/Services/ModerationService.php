@@ -41,11 +41,12 @@ class ModerationService
                     ];
                 })->toArray();
 
-            // Get flagged comments (score < -5 or reported)
+            // Get flagged comments (score < -5 or has flags)
             $flaggedComments = Comment::with(['user', 'story'])
                 ->where('score', '<', -5)
-                ->orWhere('is_flagged', true)
+                ->orWhere('flags', '>', 0)
                 ->where('is_deleted', false)
+                ->orderBy('flags', 'desc')
                 ->orderBy('created_at', 'desc')
                 ->limit(50)
                 ->get()
@@ -54,8 +55,10 @@ class ModerationService
                         'type' => 'comment',
                         'id' => $comment->id,
                         'short_id' => $comment->short_id,
-                        'comment' => $comment->comment,
+                        'comment' => substr($comment->comment, 0, 200) . (strlen($comment->comment) > 200 ? '...' : ''),
+                        'content' => $comment->markeddown_comment ?? $comment->comment,
                         'score' => $comment->score,
+                        'flags' => $comment->flags,
                         'user' => $comment->user->username ?? 'Unknown',
                         'user_id' => $comment->user_id,
                         'story' => [
@@ -65,8 +68,8 @@ class ModerationService
                         ],
                         'created_at' => $comment->created_at,
                         'time_ago' => $this->timeAgo($comment->created_at),
-                        'is_flagged' => $comment->is_flagged ?? false,
-                        'flag_reason' => $comment->flag_reason ?? null,
+                        'is_flagged' => $comment->flags > 0,
+                        'flag_count' => $comment->flags,
                     ];
                 })->toArray();
         } catch (\Exception $e) {
@@ -86,7 +89,7 @@ class ModerationService
                 'total_stories' => Story::count(),
                 'total_comments' => Comment::where('is_deleted', false)->count(),
                 'flagged_stories' => Story::where('is_flagged', true)->count(),
-                'flagged_comments' => Comment::where('is_flagged', true)->where('is_deleted', false)->count(),
+                'flagged_comments' => Comment::where('flags', '>', 0)->where('is_deleted', false)->count(),
                 'low_score_stories' => Story::where('score', '<', -3)->count(),
                 'low_score_comments' => Comment::where('score', '<', -3)->where('is_deleted', false)->count(),
                 'total_users' => User::count(),
@@ -163,24 +166,22 @@ class ModerationService
 
             switch ($action) {
                 case 'approve':
-                    $comment->is_flagged = false;
-                    $comment->flag_reason = null;
+                    $comment->flags = 0; // Clear all flags
+                    $comment->is_moderated = true;
                     break;
                     
                 case 'delete':
                     $comment->is_deleted = true;
-                    $comment->deleted_at = date('Y-m-d H:i:s');
-                    $comment->deleted_by = $moderator->id;
+                    $comment->comment = '[deleted]';
+                    $comment->markeddown_comment = '<p>[deleted]</p>';
                     break;
                     
                 case 'flag':
-                    $comment->is_flagged = true;
-                    $comment->flag_reason = $reason;
+                    $comment->flags = ($comment->flags ?? 0) + 1;
                     break;
                     
                 case 'unflag':
-                    $comment->is_flagged = false;
-                    $comment->flag_reason = null;
+                    $comment->flags = max(0, ($comment->flags ?? 0) - 1);
                     break;
                     
                 default:
@@ -262,8 +263,8 @@ class ModerationService
 
     public function isUserModerator(User $user): bool
     {
-        // Check if user has moderation privileges
-        return $user->is_moderator ?? false;
+        // Check if user has moderation privileges (moderators or admins)
+        return $user->canModerate();
     }
 
     public function isUserAdmin(User $user): bool

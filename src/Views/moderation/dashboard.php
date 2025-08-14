@@ -99,10 +99,7 @@
                             by <a href="/u/<?= $this->e($comment['user']) ?>"><?= $this->e($comment['user']) ?></a>
                             <span class="time"><?= $comment['time_ago'] ?></span>
                             <?php if ($comment['is_flagged']) : ?>
-                                <span class="flag-indicator">FLAGGED</span>
-                                <?php if ($comment['flag_reason']) : ?>
-                                    <span class="flag-reason"><?= $this->e($comment['flag_reason']) ?></span>
-                                <?php endif ?>
+                                <span class="flag-indicator">FLAGGED (<?= $comment['flag_count'] ?> flag<?= $comment['flag_count'] != 1 ? 's' : '' ?>)</span>
                             <?php endif ?>
                         </div>
                         <div class="item-excerpt">

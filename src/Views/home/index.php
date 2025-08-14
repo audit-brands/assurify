@@ -36,14 +36,14 @@
                             <?php endif ?>
                         </h2>
                         <div class="story-domain">
-                            <a href="/s/<?=$story['id']?>/<?=$story['slug']?>">(<?=$story['domain']?>)</a>
+                            <a href="/s/<?=$story['short_id']?>/<?=$story['slug']?>">(<?=$story['domain']?>)</a>
                         </div>
                     </div>
                     <div class="story-details">
                         <span class="story-points"><?=$story['score']?> points</span>
                         by <a href="/u/<?=$story['username']?>"><?=$story['username']?></a>
                         <?=$story['time_ago']?>
-                        | <a href="/s/<?=$story['id']?>/<?=$story['slug']?>"><?=$story['comments_count']?> comments</a>
+                        | <a href="/s/<?=$story['short_id']?>/<?=$story['slug']?>"><?=$story['comments_count']?> comments</a>
                     </div>
                 </div>
             </div>

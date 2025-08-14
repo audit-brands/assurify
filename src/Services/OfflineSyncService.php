@@ -14,9 +14,15 @@ class OfflineSyncService
 {
     private array $pendingActions = [];
     private array $offlineData = [];
+    private CommentService $commentService;
+    private StoryService $storyService;
     
-    public function __construct()
-    {
+    public function __construct(
+        CommentService $commentService = null,
+        StoryService $storyService = null
+    ) {
+        $this->commentService = $commentService;
+        $this->storyService = $storyService;
         $this->loadPendingActions();
         $this->loadOfflineData();
     }
@@ -127,20 +133,41 @@ class OfflineSyncService
                 ];
             }
             
-            // Mock implementation for now - would call actual CommentService in production
-            // $commentService = new CommentService();
-            // $comment = $commentService->create([...]);
+            if (!$this->commentService) {
+                return [
+                    'success' => false,
+                    'error' => 'CommentService not available'
+                ];
+            }
             
-            // Simulate successful comment creation
-            $comment = [
-                'id' => rand(1000, 9999),
-                'story_id' => $data['story_id'],
+            // Find the user and story
+            $user = isset($data['user_id']) ? \App\Models\User::find($data['user_id']) : null;
+            $story = \App\Models\Story::find($data['story_id']);
+            
+            if (!$user || !$story) {
+                return [
+                    'success' => false,
+                    'error' => 'User or story not found'
+                ];
+            }
+            
+            // Create comment using actual service
+            $comment = $this->commentService->createComment($user, $story, [
                 'comment' => $data['comment'],
-                'parent_comment_id' => $data['parent_comment_id'] ?? null,
-                'created_at' => date('Y-m-d H:i:s')
-            ];
+                'parent_comment_id' => $data['parent_comment_id'] ?? null
+            ]);
             
-            return ['success' => true, 'data' => $comment];
+            return [
+                'success' => true,
+                'data' => [
+                    'id' => $comment->id,
+                    'short_id' => $comment->short_id,
+                    'story_id' => $comment->story_id,
+                    'comment' => $comment->comment,
+                    'parent_comment_id' => $comment->parent_comment_id,
+                    'created_at' => $comment->created_at
+                ]
+            ];
             
         } catch (\Exception $e) {
             return [
@@ -163,21 +190,40 @@ class OfflineSyncService
                 ];
             }
             
-            // Mock implementation for now
-            // $storyService = new StoryService(new TagService());
-            // $result = $storyService->vote($data['story_id'], $data['vote']);
+            if (!$this->storyService) {
+                return [
+                    'success' => false,
+                    'error' => 'StoryService not available'
+                ];
+            }
             
-            // Simulate successful vote
-            $result = [
-                'story_id' => $data['story_id'],
-                'vote' => $data['vote'],
-                'new_score' => rand(1, 100),
-                'voted' => true
-            ];
+            // Find the user and story
+            $user = isset($data['user_id']) ? \App\Models\User::find($data['user_id']) : null;
+            $story = \App\Models\Story::find($data['story_id']);
+            
+            if (!$user || !$story) {
+                return [
+                    'success' => false,
+                    'error' => 'User or story not found'
+                ];
+            }
+            
+            // Cast vote using actual service
+            $voted = $this->storyService->castVote($story, $user, (int)$data['vote']);
+            
+            // Refresh story to get updated score
+            $story->refresh();
             
             return [
                 'success' => true,
-                'data' => $result
+                'data' => [
+                    'story_id' => $story->id,
+                    'vote' => $data['vote'],
+                    'new_score' => $story->score,
+                    'voted' => $voted,
+                    'upvotes' => $story->upvotes,
+                    'downvotes' => $story->downvotes
+                ]
             ];
             
         } catch (\Exception $e) {
@@ -201,21 +247,40 @@ class OfflineSyncService
                 ];
             }
             
-            // Mock implementation for now
-            // $commentService = new CommentService();
-            // $result = $commentService->vote($data['comment_id'], $data['vote']);
+            if (!$this->commentService) {
+                return [
+                    'success' => false,
+                    'error' => 'CommentService not available'
+                ];
+            }
             
-            // Simulate successful vote
-            $result = [
-                'comment_id' => $data['comment_id'],
-                'vote' => $data['vote'],
-                'new_score' => rand(1, 50),
-                'voted' => true
-            ];
+            // Find the user and comment
+            $user = isset($data['user_id']) ? \App\Models\User::find($data['user_id']) : null;
+            $comment = \App\Models\Comment::find($data['comment_id']);
+            
+            if (!$user || !$comment) {
+                return [
+                    'success' => false,
+                    'error' => 'User or comment not found'
+                ];
+            }
+            
+            // Cast vote using actual service
+            $voted = $this->commentService->castVote($comment, $user, (int)$data['vote']);
+            
+            // Refresh comment to get updated score
+            $comment->refresh();
             
             return [
                 'success' => true,
-                'data' => $result
+                'data' => [
+                    'comment_id' => $comment->id,
+                    'vote' => $data['vote'],
+                    'new_score' => $comment->score,
+                    'voted' => $voted,
+                    'upvotes' => $comment->upvotes,
+                    'downvotes' => $comment->downvotes
+                ]
             ];
             
         } catch (\Exception $e) {
@@ -239,21 +304,35 @@ class OfflineSyncService
                 ];
             }
             
-            // Mock implementation for now
-            // $commentService = new CommentService();
-            // $result = $commentService->flag($data['comment_id'], $data['reason'] ?? 'Inappropriate content');
+            if (!$this->commentService) {
+                return [
+                    'success' => false,
+                    'error' => 'CommentService not available'
+                ];
+            }
             
-            // Simulate successful flag
-            $result = [
-                'comment_id' => $data['comment_id'],
-                'reason' => $data['reason'] ?? 'Inappropriate content',
-                'flagged' => true,
-                'timestamp' => date('Y-m-d H:i:s')
-            ];
+            // Find the user and comment
+            $user = isset($data['user_id']) ? \App\Models\User::find($data['user_id']) : null;
+            $comment = \App\Models\Comment::find($data['comment_id']);
+            
+            if (!$user || !$comment) {
+                return [
+                    'success' => false,
+                    'error' => 'User or comment not found'
+                ];
+            }
+            
+            // Flag comment using actual service
+            $flagged = $this->commentService->flagComment($comment, $user);
             
             return [
                 'success' => true,
-                'data' => $result
+                'data' => [
+                    'comment_id' => $comment->id,
+                    'reason' => $data['reason'] ?? 'Inappropriate content',
+                    'flagged' => $flagged,
+                    'timestamp' => date('Y-m-d H:i:s')
+                ]
             ];
             
         } catch (\Exception $e) {
@@ -280,23 +359,45 @@ class OfflineSyncService
                 }
             }
             
-            // Mock implementation for now
-            // $storyService = new StoryService(new TagService());
-            // $story = $storyService->create($data);
+            if (!$this->storyService) {
+                return [
+                    'success' => false,
+                    'error' => 'StoryService not available'
+                ];
+            }
             
-            // Simulate successful story creation
-            $story = [
-                'id' => rand(1000, 9999),
+            // Find the user
+            $user = isset($data['user_id']) ? \App\Models\User::find($data['user_id']) : null;
+            
+            if (!$user) {
+                return [
+                    'success' => false,
+                    'error' => 'User not found'
+                ];
+            }
+            
+            // Create story using actual service
+            $story = $this->storyService->createStory($user, [
                 'title' => $data['title'],
                 'url' => $data['url'],
                 'description' => $data['description'] ?? '',
-                'score' => 1,
-                'comment_count' => 0,
-                'created_at' => date('Y-m-d H:i:s'),
-                'slug' => strtolower(str_replace(' ', '-', $data['title']))
-            ];
+                'tags' => $data['tags'] ?? []
+            ]);
             
-            return ['success' => true, 'data' => $story];
+            return [
+                'success' => true,
+                'data' => [
+                    'id' => $story->id,
+                    'short_id' => $story->short_id,
+                    'title' => $story->title,
+                    'url' => $story->url,
+                    'description' => $story->description,
+                    'score' => $story->score,
+                    'comments_count' => $story->comments_count,
+                    'created_at' => $story->created_at,
+                    'slug' => $story->slug
+                ]
+            ];
             
         } catch (\Exception $e) {
             return [

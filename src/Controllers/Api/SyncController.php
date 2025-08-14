@@ -355,9 +355,19 @@ class SyncController extends BaseApiController
      */
     private function getCurrentUserId(Request $request): ?int
     {
-        // This would typically extract user ID from JWT token or session
-        // Placeholder implementation
-        $user = $request->getAttribute('user');
-        return $user['id'] ?? null;
+        // Check session first
+        if (isset($_SESSION['user_id'])) {
+            return (int) $_SESSION['user_id'];
+        }
+        
+        // Check for JWT token in Authorization header
+        $authHeader = $request->getHeaderLine('Authorization');
+        if ($authHeader && strpos($authHeader, 'Bearer ') === 0) {
+            // Would decode JWT token here in production
+            // For now, return null if no session
+            return null;
+        }
+        
+        return null;
     }
 }

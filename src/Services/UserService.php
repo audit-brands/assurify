@@ -68,6 +68,174 @@ class UserService
     }
 
     /**
+     * Get user profile by username
+     */
+    public function getUserProfile(string $username, ?User $viewer = null): ?array
+    {
+        $user = User::with(['stories', 'comments'])->where('username', $username)->first();
+        
+        if (!$user) {
+            return null;
+        }
+        
+        // Get recent stories for display
+        $recentStories = $user->stories()
+            ->where('is_deleted', false)
+            ->orderBy('created_at', 'desc')
+            ->limit(20)
+            ->get()
+            ->map(function ($story) use ($viewer) {
+                return [
+                    'id' => $story->id,
+                    'short_id' => $story->short_id,
+                    'title' => $story->title,
+                    'score' => $story->score,
+                    'comments_count' => $story->comments_count ?? 0,
+                    'created_at' => $story->created_at,
+                    'time_ago' => $this->timeAgo($story->created_at),
+                    'slug' => $this->generateSlug($story->title),
+                    'domain' => $this->extractDomain($story->url ?? ''),
+                    'url' => $story->url,
+                    'can_edit' => $viewer ? $story->isEditableByUser($viewer) : false
+                ];
+            })
+            ->toArray();
+
+        // Get recent comments for display
+        $recentComments = $user->comments()
+            ->with(['story'])
+            ->where('is_deleted', false)
+            ->orderBy('created_at', 'desc')
+            ->limit(20)
+            ->get()
+            ->map(function ($comment) {
+                return [
+                    'id' => $comment->id,
+                    'short_id' => $comment->short_id,
+                    'comment' => substr(strip_tags($comment->comment), 0, 200),
+                    'score' => $comment->score,
+                    'created_at' => $comment->created_at,
+                    'time_ago' => $this->timeAgo($comment->created_at),
+                    'story' => [
+                        'title' => $comment->story->title ?? 'Unknown',
+                        'short_id' => $comment->story->short_id ?? '',
+                        'slug' => $this->generateSlug($comment->story->title ?? 'unknown')
+                    ]
+                ];
+            })
+            ->toArray();
+
+        // Return flattened structure expected by view
+        return [
+            'id' => $user->id,
+            'username' => $user->username,
+            'is_admin' => $user->is_admin,
+            'is_moderator' => $user->is_moderator,
+            'karma' => $user->karma,
+            'about' => $user->about,
+            'created_at' => $user->created_at,
+            'stats' => [
+                'stories_count' => $user->stories()->where('is_deleted', false)->count(),
+                'comments_count' => $user->comments()->where('is_deleted', false)->count(),
+                'karma' => $user->karma,
+                'recent_stories' => $recentStories,
+                'recent_comments' => $recentComments
+            ]
+        ];
+    }
+
+    /**
+     * Get user by username (returns User model)
+     */
+    public function getUserByUsername(string $username): ?User
+    {
+        return User::where('username', $username)->first();
+    }
+
+    /**
+     * Update user karma (placeholder - implement karma calculation logic)
+     */
+    public function updateUserKarma(User $user): void
+    {
+        // Placeholder - would calculate karma based on story scores, comment scores, etc.
+        // For now, just ensure the karma field exists
+    }
+
+    /**
+     * Get user hats/badges (placeholder)
+     */
+    public function getUserHats(User $user): array
+    {
+        // Placeholder - would return user's hats/badges
+        return [];
+    }
+
+    /**
+     * Get user settings
+     */
+    public function getUserSettings(User $user): array
+    {
+        return [
+            'email_notifications' => $user->email_notifications ?? true,
+            'pushover_notifications' => $user->pushover_notifications ?? false,
+            'pushover_user_key' => $user->pushover_user_key ?? '',
+            'pushover_sound' => $user->pushover_sound ?? '',
+            'mailing_list_mode' => $user->mailing_list_mode ?? false,
+            'show_avatars' => $user->show_avatars ?? true,
+            'show_story_previews' => $user->show_story_previews ?? true,
+            'show_submit_tagging_hints' => $user->show_submit_tagging_hints ?? true,
+            'show_read_ribbons' => $user->show_read_ribbons ?? true,
+            'hide_dragons' => $user->hide_dragons ?? false,
+        ];
+    }
+
+    /**
+     * Get user tag preferences (placeholder)
+     */
+    public function getUserTagPreferences(User $user): array
+    {
+        // Placeholder - would return user's tag filtering and favorite preferences
+        return [
+            'filtered_tags' => [],
+            'favorite_tags' => []
+        ];
+    }
+
+    /**
+     * Update user settings
+     */
+    public function updateUserSettings(User $user, array $settings): bool
+    {
+        try {
+            $user->update([
+                'email_notifications' => $settings['email_notifications'] ?? $user->email_notifications,
+                'pushover_notifications' => $settings['pushover_notifications'] ?? $user->pushover_notifications,
+                'pushover_user_key' => $settings['pushover_user_key'] ?? $user->pushover_user_key,
+                'pushover_sound' => $settings['pushover_sound'] ?? $user->pushover_sound,
+                'mailing_list_mode' => $settings['mailing_list_mode'] ?? $user->mailing_list_mode,
+                'show_avatars' => $settings['show_avatars'] ?? $user->show_avatars,
+                'show_story_previews' => $settings['show_story_previews'] ?? $user->show_story_previews,
+                'show_submit_tagging_hints' => $settings['show_submit_tagging_hints'] ?? $user->show_submit_tagging_hints,
+                'show_read_ribbons' => $settings['show_read_ribbons'] ?? $user->show_read_ribbons,
+                'hide_dragons' => $settings['hide_dragons'] ?? $user->hide_dragons,
+            ]);
+            return true;
+        } catch (\Exception $e) {
+            error_log('Failed to update user settings: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Update user tag preferences (placeholder)
+     */
+    public function updateUserTagPreferences(User $user, array $filteredTags, array $favoriteTags): bool
+    {
+        // Placeholder - would update user's tag preferences
+        return true;
+    }
+
+    /**
      * Get comprehensive user statistics
      */
     public function getUserStatistics(int $userId): array
@@ -355,5 +523,57 @@ class UserService
         $profile->updateReputationScore();
 
         return $profile;
+    }
+
+    /**
+     * Generate time ago string
+     */
+    private function timeAgo(\DateTime $datetime): string
+    {
+        $now = new \DateTime();
+        $diff = $now->diff($datetime);
+        
+        if ($diff->days > 365) {
+            return $diff->y . ' year' . ($diff->y > 1 ? 's' : '') . ' ago';
+        } elseif ($diff->days > 30) {
+            $months = floor($diff->days / 30);
+            return $months . ' month' . ($months > 1 ? 's' : '') . ' ago';
+        } elseif ($diff->days > 0) {
+            return $diff->days . ' day' . ($diff->days > 1 ? 's' : '') . ' ago';
+        } elseif ($diff->h > 0) {
+            return $diff->h . ' hour' . ($diff->h > 1 ? 's' : '') . ' ago';
+        } elseif ($diff->i > 0) {
+            return $diff->i . ' minute' . ($diff->i > 1 ? 's' : '') . ' ago';
+        } else {
+            return 'just now';
+        }
+    }
+
+    /**
+     * Generate URL slug from title
+     */
+    private function generateSlug(?string $title): string
+    {
+        if (empty($title)) {
+            return 'untitled';
+        }
+        $slug = strtolower(trim($title));
+        $slug = preg_replace('/[^a-z0-9-]/', '_', $slug);
+        $slug = preg_replace('/_+/', '_', $slug);
+        $slug = trim($slug, '_');
+        return substr($slug ?: 'untitled', 0, 50);
+    }
+
+    /**
+     * Extract domain from URL
+     */
+    private function extractDomain(string $url): string
+    {
+        if (empty($url)) {
+            return 'self';
+        }
+        $parsed = parse_url($url);
+        $host = $parsed['host'] ?? '';
+        return preg_replace('/^www\./', '', $host) ?: 'self';
     }
 }

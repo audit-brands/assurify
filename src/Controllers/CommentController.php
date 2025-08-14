@@ -44,11 +44,14 @@ class CommentController extends BaseController
 
             $comment = $this->commentService->createComment($user, $story, $commentData);
 
+            // Generate story slug for proper URL
+            $storySlug = $this->generateSlug($story->title);
+            
             return $this->json($response, [
                 'success' => true,
                 'comment_id' => $comment->id,
                 'short_id' => $comment->short_id,
-                'redirect' => "/s/{$story->short_id}#comment-{$comment->short_id}"
+                'redirect' => "/s/{$story->short_id}/{$storySlug}#comment-{$comment->short_id}"
             ]);
 
         } catch (\Exception $e) {
@@ -180,15 +183,38 @@ class CommentController extends BaseController
 
     public function index(Request $request, Response $response): Response
     {
+        // Match Lobste.rs COMMENTS_PER_PAGE constant
+        $commentsPerPage = 20;
+        
+        $queryParams = $request->getQueryParams();
+        $page = (int) ($queryParams['page'] ?? 1);
+        
+        // Validate page bounds (matching Lobste.rs logic)
+        if ($page < 1 || $page > (2**31)) {
+            throw new \InvalidArgumentException('page out of bounds');
+        }
+        
         try {
-            $comments = $this->commentService->getRecentComments(50);
+            // Get comments with pagination
+            $offset = ($page - 1) * $commentsPerPage;
+            $comments = $this->commentService->getRecentCommentsWithPagination(
+                $commentsPerPage, 
+                $offset
+            );
+            
+            // Check if there are more comments for next page
+            $hasMore = count($comments) >= $commentsPerPage;
+            
         } catch (\Exception $e) {
             $comments = [];
+            $hasMore = false;
         }
 
         return $this->render($response, 'comments/index', [
             'title' => 'Recent Comments | Assurify',
-            'comments' => $comments
+            'comments' => $comments,
+            'page' => $page,
+            'hasMore' => $hasMore
         ]);
     }
 
@@ -198,5 +224,14 @@ class CommentController extends BaseController
         
         $response->getBody()->write($rssContent);
         return $response->withHeader('Content-Type', 'application/rss+xml; charset=utf-8');
+    }
+
+    private function generateSlug(string $title): string
+    {
+        $slug = strtolower(trim($title));
+        $slug = preg_replace('/[^a-z0-9-]/', '_', $slug);
+        $slug = preg_replace('/_+/', '_', $slug);
+        $slug = trim($slug, '_');
+        return substr($slug ?: 'untitled', 0, 50);
     }
 }

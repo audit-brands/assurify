@@ -142,7 +142,8 @@ class TestAuthService implements AuthServiceInterface
     
     public function isModerator(array $user): bool
     {
-        return $user['is_moderator'] ?? false;
+        // Admins are also considered moderators
+        return ($user['is_moderator'] ?? false) || ($user['is_admin'] ?? false);
     }
     
     public function getAllUsers(): array

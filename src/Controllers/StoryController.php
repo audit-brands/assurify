@@ -40,11 +40,19 @@ class StoryController extends BaseController
         $comments = $this->commentService->getCommentsForStory($story);
         $commentTree = $this->commentService->buildCommentTree($comments);
 
+        // Check if current user can edit this story
+        $canEdit = false;
+        if (isset($_SESSION['user_id'])) {
+            $user = \App\Models\User::find($_SESSION['user_id']);
+            $canEdit = $story->isEditableByUser($user);
+        }
+
         return $this->render($response, 'stories/show', [
             'title' => $story->title . ' | Lobsters',
             'story' => $storyData,
             'comments' => $commentTree,
-            'total_comments' => count($comments)
+            'total_comments' => count($comments),
+            'can_edit' => $canEdit
         ]);
     }
 
@@ -195,10 +203,18 @@ class StoryController extends BaseController
 
         $user = \App\Models\User::find($_SESSION['user_id']);
 
-        // Only story author or moderators can edit
-        if ($story->user_id !== $user->id && !$user->is_moderator && !$user->is_admin) {
+        // Check if story can be edited by user (includes time limits and moderation checks)
+        if (!$story->isEditableByUser($user)) {
+            $message = 'You can only edit your own stories within 6 hours of posting, unless they have been moderated.';
+            if ($story->user_id !== $user->id) {
+                $message = 'You can only edit your own stories.';
+            } elseif ($story->is_moderated) {
+                $message = 'This story has been moderated and cannot be edited.';
+            }
+            
             return $this->render($response, 'errors/403', [
-                'title' => 'Access Denied | Lobsters'
+                'title' => 'Access Denied | Assurify',
+                'message' => $message
             ]);
         }
 
@@ -209,5 +225,75 @@ class StoryController extends BaseController
             'story' => $storyData,
             'error' => $_SESSION['story_error'] ?? null,
         ]);
+    }
+
+    public function update(Request $request, Response $response, array $args): Response
+    {
+        // Require authentication
+        if (!isset($_SESSION['user_id'])) {
+            return $this->redirect($response, '/auth/login');
+        }
+
+        $shortId = $args['id'];
+        $story = $this->storyService->getStoryByShortId($shortId);
+
+        if (!$story) {
+            return $this->render($response, 'stories/not-found', [
+                'title' => 'Story Not Found | Lobsters'
+            ]);
+        }
+
+        $user = \App\Models\User::find($_SESSION['user_id']);
+
+        // Check if story can be edited by user
+        if (!$story->isEditableByUser($user)) {
+            $_SESSION['story_error'] = 'You can only edit your own stories within 6 hours of posting.';
+            return $this->redirect($response, "/s/{$shortId}");
+        }
+
+        try {
+            $data = $request->getParsedBody();
+            
+            // Validate input
+            if (empty($data['title'])) {
+                $_SESSION['story_error'] = 'Title is required';
+                return $this->redirect($response, "/s/{$shortId}/edit");
+            }
+
+            if (strlen($data['title']) > 150) {
+                $_SESSION['story_error'] = 'Title must be 150 characters or less';
+                return $this->redirect($response, "/s/{$shortId}/edit");
+            }
+
+            // Update story fields
+            $story->title = trim($data['title']);
+            $story->description = trim($data['description'] ?? '');
+            $story->user_is_author = isset($data['user_is_author']) ? true : false;
+            
+            // Process markdown for description
+            if ($story->description) {
+                $story->markeddown_description = \Michelf\Markdown::defaultTransform($story->description);
+            } else {
+                $story->markeddown_description = null;
+            }
+            
+            // Note: slug is generated dynamically in views, not stored in database
+            $story->updated_at = date('Y-m-d H:i:s');
+            
+            $story->save();
+
+            // Handle tags update
+            if (isset($data['tags'])) {
+                $this->storyService->updateStoryTags($story, $data['tags']);
+            }
+
+            $_SESSION['story_success'] = 'Story updated successfully!';
+            $slug = $this->storyService->generateSlug($story->title);
+            return $this->redirect($response, "/s/{$shortId}/{$slug}");
+
+        } catch (\Exception $e) {
+            $_SESSION['story_error'] = $e->getMessage();
+            return $this->redirect($response, "/s/{$shortId}/edit");
+        }
     }
 }

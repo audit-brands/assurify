@@ -232,8 +232,11 @@ return [
         return new WebSocketService();
     },
 
-    OfflineSyncService::class => function () {
-        return new OfflineSyncService();
+    OfflineSyncService::class => function (Container $c) {
+        return new OfflineSyncService(
+            $c->get(CommentService::class),
+            $c->get(StoryService::class)
+        );
     },
 
     RecommendationService::class => function (Container $c) {

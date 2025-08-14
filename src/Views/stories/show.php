@@ -59,7 +59,7 @@ $this->layout('layout', ['title' => $title]) ?>
     
     <div class="story-actions">
         <a href="/s/<?=$this->e($story['short_id'])?>#comments">discuss</a>
-        <?php if (isset($_SESSION['user_id']) && $_SESSION['user_id'] == $story['user_id']) : ?>
+        <?php if ($can_edit ?? false) : ?>
             <a href="/s/<?=$this->e($story['short_id'])?>/edit">edit</a>
         <?php endif ?>
     </div>
@@ -150,6 +150,13 @@ document.addEventListener('DOMContentLoaded', function() {
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             
+            // Prevent duplicate submissions
+            if (this.dataset.submitting === 'true') {
+                console.log('Form already submitting, ignoring duplicate submission');
+                return;
+            }
+            this.dataset.submitting = 'true';
+            
             const storyId = this.dataset.storyId || document.querySelector('[data-story-id]')?.dataset.storyId;
             const parentId = this.dataset.parentId || null;
             const textarea = this.querySelector('textarea[name="comment"]');
@@ -157,6 +164,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (!comment) {
                 alert('Please enter a comment.');
+                this.dataset.submitting = 'false';
                 return;
             }
             
@@ -179,8 +187,36 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Redirect to comment
-                    window.location.href = data.redirect;
+                    // Close the reply form
+                    const replyForm = this.closest('.reply-form');
+                    if (replyForm) {
+                        replyForm.style.setProperty('display', 'none', 'important');
+                        replyForm.classList.remove('force-visible');
+                        
+                        // Find and update the reply link text
+                        const formId = replyForm.id.replace('reply-form-', '');
+                        const replyLink = document.querySelector(`[data-comment-id="${formId}"].reply-link`);
+                        if (replyLink) {
+                            replyLink.textContent = 'reply';
+                        }
+                    }
+                    
+                    // Clear the form
+                    this.querySelector('textarea').value = '';
+                    
+                    // Show success message briefly
+                    const successMsg = document.createElement('div');
+                    successMsg.style.cssText = 'background: #28a745; color: white; padding: 8px; border-radius: 4px; margin: 10px 0; text-align: center;';
+                    successMsg.textContent = 'Reply posted successfully!';
+                    
+                    if (replyForm) {
+                        replyForm.parentNode.insertBefore(successMsg, replyForm.nextSibling);
+                        setTimeout(() => {
+                            successMsg.remove();
+                            // Optionally refresh page to show new comment
+                            window.location.reload();
+                        }, 1500);
+                    }
                 } else {
                     alert(data.error || 'Failed to post comment');
                 }
@@ -192,39 +228,136 @@ document.addEventListener('DOMContentLoaded', function() {
             .finally(() => {
                 submitBtn.textContent = originalText;
                 submitBtn.disabled = false;
+                this.dataset.submitting = 'false';
             });
         });
     });
 
-    // Reply link functionality
-    document.querySelectorAll('.reply-link').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const commentId = this.dataset.commentId;
-            const replyForm = document.getElementById(`reply-form-${commentId}`);
+    // Reply link functionality - simplified and more robust
+    function setupReplyFunctionality() {
+        console.log('Setting up reply functionality...');
+        const replyLinks = document.querySelectorAll('.reply-link');
+        console.log('Found', replyLinks.length, 'reply links');
+        
+        replyLinks.forEach((link, index) => {
+            console.log('Setting up reply link', index, 'with comment ID:', link.dataset.commentId);
             
-            if (replyForm.style.display === 'none') {
-                replyForm.style.display = 'block';
-                replyForm.querySelector('textarea').focus();
-                this.textContent = 'cancel reply';
-            } else {
-                replyForm.style.display = 'none';
-                this.textContent = 'reply';
-            }
+            // Remove any existing listeners to prevent duplicates
+            link.removeEventListener('click', handleReplyClick);
+            link.addEventListener('click', handleReplyClick);
         });
-    });
+    }
+    
+    function handleReplyClick(e) {
+        e.preventDefault();
+        console.log('Reply link clicked');
+        
+        const commentId = this.dataset.commentId;
+        console.log('Comment ID:', commentId);
+        
+        const replyForm = document.getElementById(`reply-form-${commentId}`);
+        console.log('Reply form element:', replyForm);
+        
+        if (!replyForm) {
+            console.error('Reply form not found for comment ID:', commentId);
+            alert('Error: Reply form not found. Please refresh the page and try again.');
+            return;
+        }
+        
+        // Check if form is currently hidden
+        const currentDisplay = window.getComputedStyle(replyForm).display;
+        const isHidden = currentDisplay === 'none';
+        
+        console.log('Current display:', currentDisplay, 'Is hidden:', isHidden);
+        
+        if (isHidden) {
+            // Force show the form by removing display none and adding explicit class
+            replyForm.style.setProperty('display', 'block', 'important');
+            replyForm.style.setProperty('visibility', 'visible', 'important');
+            replyForm.style.setProperty('opacity', '1', 'important');
+            replyForm.style.setProperty('height', 'auto', 'important');
+            
+            // Remove any hiding classes and add a show class
+            replyForm.classList.remove('hidden');
+            replyForm.classList.add('force-visible');
+            
+            // Also try removing the initial display: none from the style attribute
+            replyForm.style.removeProperty('display');
+            replyForm.style.setProperty('display', 'block', 'important');
+            
+            console.log('After setting display:', window.getComputedStyle(replyForm).display);
+            
+            // Double-check if it's still hidden by other CSS
+            const computedStyle = window.getComputedStyle(replyForm);
+            console.log('All computed styles - display:', computedStyle.display, 'visibility:', computedStyle.visibility, 'opacity:', computedStyle.opacity);
+            
+            // Focus on textarea
+            const textarea = replyForm.querySelector('textarea');
+            if (textarea) {
+                setTimeout(() => {
+                    textarea.focus();
+                    console.log('Textarea focused');
+                }, 100);
+            }
+            
+            this.textContent = 'cancel reply';
+            console.log('Reply form shown for comment:', commentId);
+        } else {
+            // Hide the form
+            replyForm.style.setProperty('display', 'none', 'important');
+            this.textContent = 'reply';
+            console.log('Reply form hidden for comment:', commentId);
+        }
+    }
+    
+    // Call setup function
+    setupReplyFunctionality();
 
     // Cancel reply buttons
     document.querySelectorAll('.cancel-reply').forEach(button => {
         button.addEventListener('click', function() {
+            console.log('Cancel button clicked');
             const form = this.closest('.reply-form');
             const commentId = form.id.replace('reply-form-', '');
             const replyLink = document.querySelector(`[data-comment-id="${commentId}"].reply-link`);
             
-            form.style.display = 'none';
-            form.querySelector('textarea').value = '';
+            console.log('Hiding form:', form.id);
+            
+            // Use the same aggressive hiding approach as the toggle
+            form.style.setProperty('display', 'none', 'important');
+            form.classList.remove('force-visible');
+            
+            // Clear the textarea
+            const textarea = form.querySelector('textarea');
+            if (textarea) {
+                textarea.value = '';
+            }
+            
+            // Reset the reply link text
             if (replyLink) {
                 replyLink.textContent = 'reply';
+                console.log('Reset reply link text');
+            }
+        });
+    });
+    
+    // Comment collapse/expand functionality
+    document.querySelectorAll('.comment-toggle').forEach(button => {
+        button.addEventListener('click', function() {
+            const commentId = this.dataset.commentId;
+            const commentBody = document.querySelector(`.comment-body[data-comment-id="${commentId}"]`);
+            const isCollapsed = commentBody.style.display === 'none';
+            
+            if (isCollapsed) {
+                // Expand comment
+                commentBody.style.display = 'block';
+                this.textContent = '[-]';
+                this.title = 'Collapse comment';
+            } else {
+                // Collapse comment
+                commentBody.style.display = 'none';
+                this.textContent = '[+]';
+                this.title = 'Expand comment';
             }
         });
     });
@@ -269,3 +402,14 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+<style>
+.force-visible {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+}
+</style>

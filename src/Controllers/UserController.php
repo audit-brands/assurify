@@ -28,7 +28,13 @@ class UserController extends BaseController
         $username = $args['username'];
         $tab = $request->getQueryParams()['tab'] ?? 'stories';
 
-        $userProfile = $this->userService->getUserProfile($username);
+        // Get current user (viewer) for permission checks
+        $viewer = null;
+        if (isset($_SESSION['user_id'])) {
+            $viewer = \App\Models\User::find($_SESSION['user_id']);
+        }
+
+        $userProfile = $this->userService->getUserProfile($username, $viewer);
         
         if (!$userProfile) {
             return $this->render($response, 'users/not-found', [
@@ -42,10 +48,36 @@ class UserController extends BaseController
         $this->userService->updateUserKarma($user);
         $userProfile['karma'] = $user->fresh()->karma;
 
+        // Handle saved tab - check access permissions
+        $savedStories = [];
+        if ($tab === 'saved') {
+            $viewerCanSee = false;
+            if (isset($_SESSION['user_id'])) {
+                $viewer = User::find($_SESSION['user_id']);
+                $viewerCanSee = $viewer && ($viewer->id === $user->id || $viewer->is_admin);
+            }
+
+            if (!$viewerCanSee) {
+                return $this->render($response, 'errors/403', [
+                    'title' => 'Access Denied | Assurify',
+                    'message' => 'You can only view your own saved stories.'
+                ]);
+            }
+
+            // Get saved stories
+            $savedStoriesData = $user->savedStories()
+                                    ->with(['story'])
+                                    ->orderBy('created_at', 'desc')
+                                    ->get()
+                                    ->pluck('story');
+            $savedStories = $this->formatStoriesForView($savedStoriesData);
+        }
+
         return $this->render($response, 'users/show', [
             'title' => $username . ' | Assurify',
             'user' => $userProfile,
             'tab' => $tab,
+            'saved_stories' => $savedStories,
             'current_user_id' => $_SESSION['user_id'] ?? null
         ]);
     }

@@ -96,7 +96,7 @@
                             <?php if ($result['type'] === 'story') : ?>
                                 <div class="story-result">
                                     <h3>
-                                        <a href="/s/<?=$result['short_id']?>"><?=$this->e($result['title'])?></a>
+                                        <a href="/s/<?=$result['short_id']?>/<?=$this->e($result['slug'])?>"><?=$this->e($result['title'])?></a>
                                         <?php if ($result['domain']) : ?>
                                             <span class="domain">(<?=$this->e($result['domain'])?>)</span>
                                         <?php endif ?>
@@ -125,7 +125,7 @@
                             <?php elseif ($result['type'] === 'comment') : ?>
                                 <div class="comment-result">
                                     <h3>
-                                        <a href="/s/<?=$result['story']['short_id']?>#comment-<?=$result['short_id']?>">
+                                        <a href="/s/<?=$result['story']['short_id']?>/<?=$this->e($result['story']['slug'])?>#comment-<?=$result['short_id']?>">
                                             Comment on: <?=$this->e($result['story']['title'])?>
                                         </a>
                                     </h3>

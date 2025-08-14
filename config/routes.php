@@ -38,8 +38,9 @@ $app->group('/stories', function (RouteCollectorProxy $group) {
     $group->post('/{id}/vote', [StoryController::class, 'vote']);
 });
 
-$app->get('/s/{id}/{slug}', [StoryController::class, 'show']);
 $app->get('/s/{id}/edit', [StoryController::class, 'edit']);
+$app->post('/s/{id}/update', [StoryController::class, 'update']);
+$app->get('/s/{id}/{slug}', [StoryController::class, 'show']);
 
 // Comment routes
 $app->group('/comments', function (RouteCollectorProxy $group) {

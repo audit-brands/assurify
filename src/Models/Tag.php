@@ -16,7 +16,9 @@ class Tag extends Model
         'privileged',
         'is_media',
         'inactive',
-        'hotness_mod'
+        'hotness_mod',
+        'category_id',
+        'token'
     ];
 
     protected $casts = [

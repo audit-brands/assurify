@@ -77,6 +77,21 @@ class StoryService
         return $story;
     }
 
+    public function updateStoryTags(\App\Models\Story $story, string $tags): void
+    {
+        // Remove existing tags
+        $story->tags()->detach();
+        
+        // Add new tags
+        if (!empty(trim($tags))) {
+            // Get the story author for tag validation
+            $user = \App\Models\User::find($story->user_id);
+            if ($user) {
+                $this->tagService->tagStory($story, $tags, $user);
+            }
+        }
+    }
+
     public function findDuplicateUrl(string $url): ?Story
     {
         // Normalize URL for comparison

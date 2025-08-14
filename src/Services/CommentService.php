@@ -41,6 +41,29 @@ class CommentService
         // Validate input
         $this->validateCommentData($data);
 
+        // Temporarily disable duplicate detection to fix false positives
+        // TODO: Re-enable with proper logic after debugging
+        /*
+        // Check for duplicate comments (same user, story, parent, content within last 2 minutes)
+        $commentText = trim($data['comment']);
+        $parentCommentId = $data['parent_comment_id'] ?? null;
+        
+        // Debug logging
+        error_log("Duplicate check - User: {$user->id}, Story: {$story->id}, Parent: " . ($parentCommentId ?? 'null') . ", Text: '{$commentText}'");
+        
+        $duplicateComment = Comment::where('user_id', $user->id)
+            ->where('story_id', $story->id)
+            ->where('comment', $commentText)
+            ->where('parent_comment_id', $parentCommentId) // Include parent comment in duplicate check
+            ->where('created_at', '>', date('Y-m-d H:i:s', strtotime('-2 minutes')))
+            ->first();
+
+        if ($duplicateComment) {
+            error_log("Found duplicate - ID: {$duplicateComment->id}, Parent: " . ($duplicateComment->parent_comment_id ?? 'null') . ", Text: '{$duplicateComment->comment}', Created: {$duplicateComment->created_at}");
+            throw new \Exception("Duplicate comment detected. Please wait before posting the same comment again. (Debug: Found existing comment ID {$duplicateComment->id})");
+        }
+        */
+
         // Create comment
         $comment = new Comment();
         $comment->user_id = $user->id;
@@ -71,8 +94,14 @@ class CommentService
 
         $comment->save();
 
-        // Add submitter's upvote
-        $this->castVote($comment, $user, 1);
+        // Add submitter's upvote (only if they haven't already voted on this story)
+        $existingVote = Vote::where('user_id', $user->id)
+                          ->where('story_id', $story->id)
+                          ->first();
+        
+        if (!$existingVote) {
+            $this->castVote($comment, $user, 1);
+        }
 
         // Update story comment count
         $this->updateStoryCommentCount($story);
@@ -213,6 +242,7 @@ class CommentService
     {
         $voteRecord = new Vote();
         $voteRecord->user_id = $user->id;
+        $voteRecord->story_id = $comment->story_id; // Required field - get from comment
         $voteRecord->comment_id = $comment->id;
         $voteRecord->vote = $vote;
         $voteRecord->updated_at = date('Y-m-d H:i:s');
@@ -327,6 +357,27 @@ class CommentService
             $comments = Comment::where('is_deleted', false)
                              ->with(['user', 'story'])
                              ->orderBy('created_at', 'desc')
+                             ->take($limit)
+                             ->get();
+
+            return $this->formatCommentsForView($comments);
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    public function getRecentCommentsWithPagination(int $limit = 20, int $offset = 0): array
+    {
+        try {
+            // Match Lobste.rs query logic: accessible_to_user, not_on_story_hidden_by, filter_tags, etc.
+            $comments = Comment::where('is_deleted', false)
+                             ->where('is_moderated', false)
+                             ->with(['user', 'story'])
+                             ->whereHas('story', function($query) {
+                                 $query->where('is_deleted', false);
+                             })
+                             ->orderBy('id', 'desc') // Match Lobste.rs ordering by id desc
+                             ->skip($offset)
                              ->take($limit)
                              ->get();
 

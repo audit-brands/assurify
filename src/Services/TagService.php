@@ -30,6 +30,8 @@ class TagService
             $tag->tag = $tagName;
             $tag->description = $description;
             $tag->privileged = $privileged;
+            $tag->category_id = 4; // Default to "General" category
+            $tag->token = bin2hex(random_bytes(16)); // Generate a random token
             $tag->save();
 
             return $tag;
@@ -72,6 +74,12 @@ class TagService
         // Add new tags
         foreach ($tagNames as $tagName) {
             $tag = $this->createTag($tagName);
+
+            // Skip if tag creation failed
+            if (!$tag) {
+                error_log("Failed to create tag: $tagName");
+                continue;
+            }
 
             // Check if user can use this tag (privileged tags)
             if ($tag->privileged && !$user->is_moderator && !$user->is_admin) {

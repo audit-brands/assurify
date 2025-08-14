@@ -216,6 +216,7 @@ class SearchService
                 'type' => 'story',
                 'id' => $story->id,
                 'short_id' => $story->short_id,
+                'slug' => $this->generateSlug($story->title),
                 'title' => $story->title,
                 'description' => $story->description,
                 'url' => $story->url,
@@ -247,6 +248,7 @@ class SearchService
                 'story' => [
                     'id' => $comment->story->id,
                     'short_id' => $comment->story->short_id,
+                    'slug' => $this->generateSlug($comment->story->title),
                     'title' => $comment->story->title
                 ],
                 'created_at' => $comment->created_at,
@@ -1043,5 +1045,20 @@ class SearchService
             // Log error but don't fail the search
             error_log('Failed to track search: ' . $e->getMessage());
         }
+    }
+    
+    /**
+     * Generate URL slug from title
+     */
+    private function generateSlug(?string $title): string
+    {
+        if (empty($title)) {
+            return 'untitled';
+        }
+        $slug = strtolower(trim($title));
+        $slug = preg_replace('/[^a-z0-9-]/', '_', $slug);
+        $slug = preg_replace('/_+/', '_', $slug);
+        $slug = trim($slug, '_');
+        return substr($slug ?: 'untitled', 0, 50);
     }
 }

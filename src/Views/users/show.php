@@ -87,7 +87,7 @@
                 Comments (<?=$user['stats']['comments_count']?>)
             </a>
             <?php if ($current_user_id && ($current_user_id === $user['id'] || (isset($_SESSION['is_admin']) && $_SESSION['is_admin']))) : ?>
-                <a href="/u/<?=$this->e($user['username'])?>/saved" class="tab">
+                <a href="/u/<?=$this->e($user['username'])?>?tab=saved" class="tab <?= $tab === 'saved' ? 'active' : '' ?>">
                     Saved Stories
                 </a>
             <?php endif ?>
@@ -119,6 +119,9 @@
                                         <div class="story-meta">
                                             <a href="/s/<?=$story['short_id']?>/<?=$story['slug']?>"><?=$story['comments_count']?> comments</a>
                                             | <?=$story['time_ago']?>
+                                            <?php if ($story['can_edit'] ?? false) : ?>
+                                                | <a href="/s/<?=$story['short_id']?>/edit">edit</a>
+                                            <?php endif ?>
                                         </div>
                                     </div>
                                 </div>
@@ -151,6 +154,38 @@
                                         </div>
                                         <div class="comment-meta">
                                             <a href="/comments/<?=$comment['short_id']?>"><?=$comment['time_ago']?></a>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach ?>
+                        </div>
+                    <?php endif ?>
+                </div>
+            <?php elseif ($tab === 'saved') : ?>
+                <div class="stories-section">
+                    <?php if (empty($saved_stories)) : ?>
+                        <p class="no-content">No saved stories yet.</p>
+                    <?php else : ?>
+                        <div class="stories-list">
+                            <?php foreach ($saved_stories as $story) : ?>
+                                <div class="story-item">
+                                    <div class="story-score"><?=$story['score']?></div>
+                                    <div class="story-content">
+                                        <h3 class="story-title">
+                                            <?php if ($story['url']) : ?>
+                                                <a href="<?=$this->e($story['url'])?>" target="_blank" rel="noopener">
+                                                    <?=$this->e($story['title'])?>
+                                                </a>
+                                                <span class="story-domain">(<?=$this->e($story['domain'])?>)</span>
+                                            <?php else : ?>
+                                                <a href="/s/<?=$story['short_id']?>/<?=$story['slug']?>">
+                                                    <?=$this->e($story['title'])?>
+                                                </a>
+                                            <?php endif ?>
+                                        </h3>
+                                        <div class="story-meta">
+                                            <a href="/s/<?=$story['short_id']?>/<?=$story['slug']?>"><?=$story['comment_count']?> comments</a>
+                                            | <?=$story['time_ago']?>
                                         </div>
                                     </div>
                                 </div>

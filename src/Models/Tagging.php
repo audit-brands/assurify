@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Tagging extends Model
 {
+    // Disable timestamps to match Lobste.rs schema
+    public $timestamps = false;
+    
     protected $fillable = [
         'story_id',
         'tag_id'
