@@ -20,6 +20,12 @@
             <h2>Account Settings</h2>
             
             <div class="form-group">
+                <label for="username" class="required">Username:</label>
+                <input type="text" name="username" id="username" value="<?=$this->e($settings['username'])?>" required maxlength="50" pattern="[A-Za-z0-9_\-]+">
+                <small>Format: letters, numbers, underscore, and dash only. Username changes are logged.</small>
+            </div>
+            
+            <div class="form-group">
                 <label for="email" class="required">Email Address:</label>
                 <input type="email" name="email" id="email" value="<?=$this->e($settings['email'])?>" required inputmode="email">
                 <small>Used for account recovery and notifications (if enabled).</small>

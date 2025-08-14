@@ -194,6 +194,7 @@ class UserService
         $profile = $user->getProfile();
         
         return [
+            'username' => $user->username,
             'email' => $user->email,
             'email_notifications' => $user->email_notifications ?? true,
             'pushover_notifications' => $user->pushover_notifications ?? false,
@@ -237,6 +238,34 @@ class UserService
         try {
             // Prepare user fields update - only include fields that are actually being updated
             $userFields = [];
+            
+            // Username validation and update
+            if (isset($settings['username'])) {
+                $username = trim($settings['username']);
+                
+                // Validate username format (letters, numbers, underscore, dash only)
+                if (!preg_match('/^[A-Za-z0-9_\-]+$/', $username)) {
+                    throw new \InvalidArgumentException('Username can only contain letters, numbers, underscore, and dash.');
+                }
+                
+                // Validate username length
+                if (strlen($username) < 2 || strlen($username) > 50) {
+                    throw new \InvalidArgumentException('Username must be between 2 and 50 characters.');
+                }
+                
+                // Check if username is already taken by another user
+                $existingUser = User::where('username', $username)->where('id', '!=', $user->id)->first();
+                if ($existingUser) {
+                    throw new \InvalidArgumentException('Username is already in use.');
+                }
+                
+                // Update session username if it changed
+                if ($username !== $user->username && isset($_SESSION['user_id']) && $_SESSION['user_id'] == $user->id) {
+                    $_SESSION['username'] = $username;
+                }
+                
+                $userFields['username'] = $username;
+            }
             
             // Account fields
             if (isset($settings['email'])) {
@@ -313,6 +342,9 @@ class UserService
             }
             
             return true;
+        } catch (\InvalidArgumentException $e) {
+            // Re-throw validation exceptions so they can be handled by the controller
+            throw $e;
         } catch (\Exception $e) {
             error_log('Failed to update user settings: ' . $e->getMessage());
             error_log('Stack trace: ' . $e->getTraceAsString());
