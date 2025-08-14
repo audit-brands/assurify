@@ -211,7 +211,7 @@ class CommentController extends BaseController
         }
 
         return $this->render($response, 'comments/index', [
-            'title' => 'Recent Comments | Assurify',
+            'title' => 'Comments | Assurify',
             'comments' => $comments,
             'page' => $page,
             'hasMore' => $hasMore

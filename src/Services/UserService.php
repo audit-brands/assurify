@@ -72,7 +72,7 @@ class UserService
      */
     public function getUserProfile(string $username, ?User $viewer = null): ?array
     {
-        $user = User::with(['stories', 'comments'])->where('username', $username)->first();
+        $user = User::with(['stories', 'comments', 'invitedBy'])->where('username', $username)->first();
         
         if (!$user) {
             return null;
@@ -125,15 +125,31 @@ class UserService
             })
             ->toArray();
 
+        // Get user profile for additional fields
+        $profile = $user->getProfile();
+        
         // Return flattened structure expected by view
         return [
             'id' => $user->id,
             'username' => $user->username,
+            'email' => $user->email,
             'is_admin' => $user->is_admin,
             'is_moderator' => $user->is_moderator,
             'karma' => $user->karma,
             'about' => $user->about,
+            'homepage' => $user->homepage,
+            'github_username' => $user->github_username,
+            'twitter_username' => $user->twitter_username,
+            'mastodon_username' => $user->mastodon_username,
+            'linkedin_username' => $user->linkedin_username,
+            'bluesky_username' => $user->bluesky_username,
+            'show_email' => $profile->show_email ?? false,
+            'invited_by' => $user->invitedBy ? [
+                'id' => $user->invitedBy->id,
+                'username' => $user->invitedBy->username
+            ] : null,
             'created_at' => $user->created_at,
+            'created_at_formatted' => $this->formatJoinedDate($user->created_at),
             'stats' => [
                 'stories_count' => $user->stories()->where('is_deleted', false)->count(),
                 'comments_count' => $user->comments()->where('is_deleted', false)->count(),
@@ -175,7 +191,10 @@ class UserService
      */
     public function getUserSettings(User $user): array
     {
+        $profile = $user->getProfile();
+        
         return [
+            'email' => $user->email,
             'email_notifications' => $user->email_notifications ?? true,
             'pushover_notifications' => $user->pushover_notifications ?? false,
             'pushover_user_key' => $user->pushover_user_key ?? '',
@@ -186,6 +205,15 @@ class UserService
             'show_submit_tagging_hints' => $user->show_submit_tagging_hints ?? true,
             'show_read_ribbons' => $user->show_read_ribbons ?? true,
             'hide_dragons' => $user->hide_dragons ?? false,
+            'show_email' => $profile->show_email ?? false,
+            'homepage' => $user->homepage ?? '',
+            'github_username' => $user->github_username ?? '',
+            'twitter_username' => $user->twitter_username ?? '',
+            'mastodon_username' => $user->mastodon_username ?? '',
+            'linkedin_username' => $user->linkedin_username ?? '',
+            'bluesky_username' => $user->bluesky_username ?? '',
+            'about' => $user->about ?? '',
+            'allow_messages_from' => $profile->allow_messages_from ?? 'members',
         ];
     }
 
@@ -207,21 +235,87 @@ class UserService
     public function updateUserSettings(User $user, array $settings): bool
     {
         try {
-            $user->update([
-                'email_notifications' => $settings['email_notifications'] ?? $user->email_notifications,
-                'pushover_notifications' => $settings['pushover_notifications'] ?? $user->pushover_notifications,
-                'pushover_user_key' => $settings['pushover_user_key'] ?? $user->pushover_user_key,
-                'pushover_sound' => $settings['pushover_sound'] ?? $user->pushover_sound,
-                'mailing_list_mode' => $settings['mailing_list_mode'] ?? $user->mailing_list_mode,
-                'show_avatars' => $settings['show_avatars'] ?? $user->show_avatars,
-                'show_story_previews' => $settings['show_story_previews'] ?? $user->show_story_previews,
-                'show_submit_tagging_hints' => $settings['show_submit_tagging_hints'] ?? $user->show_submit_tagging_hints,
-                'show_read_ribbons' => $settings['show_read_ribbons'] ?? $user->show_read_ribbons,
-                'hide_dragons' => $settings['hide_dragons'] ?? $user->hide_dragons,
-            ]);
+            // Prepare user fields update - only include fields that are actually being updated
+            $userFields = [];
+            
+            // Account fields
+            if (isset($settings['email'])) {
+                $email = trim($settings['email']);
+                
+                // Validate email format
+                if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    throw new \InvalidArgumentException('Invalid email address format.');
+                }
+                
+                // Check if email is already taken by another user
+                $existingUser = User::where('email', $email)->where('id', '!=', $user->id)->first();
+                if ($existingUser) {
+                    throw new \InvalidArgumentException('Email address is already in use.');
+                }
+                
+                $userFields['email'] = $email;
+            }
+            
+            // Profile information fields
+            if (isset($settings['about'])) {
+                $userFields['about'] = $settings['about'];
+            }
+            if (isset($settings['homepage'])) {
+                $userFields['homepage'] = $settings['homepage'];
+            }
+            if (isset($settings['github_username'])) {
+                $userFields['github_username'] = $settings['github_username'];
+            }
+            if (isset($settings['twitter_username'])) {
+                $userFields['twitter_username'] = $settings['twitter_username'];
+            }
+            if (isset($settings['mastodon_username'])) {
+                $userFields['mastodon_username'] = $settings['mastodon_username'];
+            }
+            if (isset($settings['linkedin_username'])) {
+                $userFields['linkedin_username'] = $settings['linkedin_username'];
+            }
+            if (isset($settings['bluesky_username'])) {
+                $userFields['bluesky_username'] = $settings['bluesky_username'];
+            }
+            
+            // Display preference fields (these come as boolean values from checkboxes)
+            if (array_key_exists('show_avatars', $settings)) {
+                $userFields['show_avatars'] = $settings['show_avatars'];
+            }
+            if (array_key_exists('show_story_previews', $settings)) {
+                $userFields['show_story_previews'] = $settings['show_story_previews'];
+            }
+            if (array_key_exists('show_read_ribbons', $settings)) {
+                $userFields['show_read_ribbons'] = $settings['show_read_ribbons'];
+            }
+            if (array_key_exists('hide_dragons', $settings)) {
+                $userFields['hide_dragons'] = $settings['hide_dragons'];
+            }
+            
+            // Update user fields if there are any
+            if (!empty($userFields)) {
+                $user->update($userFields);
+            }
+            
+            // Update profile fields
+            $profileFields = [];
+            if (array_key_exists('show_email', $settings)) {
+                $profileFields['show_email'] = $settings['show_email'];
+            }
+            if (isset($settings['allow_messages_from'])) {
+                $profileFields['allow_messages_from'] = $settings['allow_messages_from'];
+            }
+            
+            if (!empty($profileFields)) {
+                $profile = $user->getProfile();
+                $profile->update($profileFields);
+            }
+            
             return true;
         } catch (\Exception $e) {
             error_log('Failed to update user settings: ' . $e->getMessage());
+            error_log('Stack trace: ' . $e->getTraceAsString());
             return false;
         }
     }
@@ -575,5 +669,63 @@ class UserService
         $parsed = parse_url($url);
         $host = $parsed['host'] ?? '';
         return preg_replace('/^www\./', '', $host) ?: 'self';
+    }
+
+    /**
+     * Format joined date for display (Rails time_ago_in_words style)
+     */
+    private function formatJoinedDate($createdAt): string
+    {
+        if (!$createdAt) {
+            return 'unknown';
+        }
+        
+        // Convert to DateTime if it's a string
+        if (is_string($createdAt)) {
+            $date = new \DateTime($createdAt);
+        } else if ($createdAt instanceof \DateTime) {
+            $date = $createdAt;
+        } else {
+            return 'unknown';
+        }
+        
+        $now = new \DateTime();
+        $diff = $now->diff($date);
+        
+        // Calculate total seconds difference for more precise calculations
+        $totalSeconds = ($now->getTimestamp() - $date->getTimestamp());
+        $totalMinutes = round($totalSeconds / 60);
+        $totalHours = round($totalSeconds / 3600);
+        $totalDays = $diff->days;
+        
+        // Follow Rails time_ago_in_words logic
+        if ($totalSeconds < 60) {
+            return 'less than a minute ago';
+        } elseif ($totalMinutes < 2) {
+            return '1 minute ago';
+        } elseif ($totalMinutes < 45) {
+            return $totalMinutes . ' minutes ago';
+        } elseif ($totalMinutes < 90) {
+            return 'about 1 hour ago';
+        } elseif ($totalHours < 24) {
+            $hours = round($totalMinutes / 60);
+            return 'about ' . $hours . ' hour' . ($hours > 1 ? 's' : '') . ' ago';
+        } elseif ($totalHours < 48) {
+            return '1 day ago';
+        } elseif ($totalDays < 30) {
+            return $totalDays . ' days ago';
+        } elseif ($totalDays < 60) {
+            return 'about 1 month ago';
+        } elseif ($totalDays < 365) {
+            $months = round($totalDays / 30);
+            return 'about ' . $months . ' month' . ($months > 1 ? 's' : '') . ' ago';
+        } elseif ($totalDays < 548) { // 1.5 years
+            return 'about 1 year ago';
+        } elseif ($totalDays < 730) { // 2 years
+            return 'over 1 year ago';
+        } else {
+            $years = round($totalDays / 365);
+            return 'about ' . $years . ' year' . ($years > 1 ? 's' : '') . ' ago';
+        }
     }
 }

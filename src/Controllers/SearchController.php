@@ -54,7 +54,7 @@ class SearchController extends BaseController
         }
 
         return $this->render($response, 'search/index', [
-            'title' => !empty($query) ? "Search: {$query} | Lobsters" : 'Search | Lobsters',
+            'title' => !empty($query) ? "Search: {$query} | Assurify" : 'Search | Assurify',
             'query' => $query,
             'type' => $type,
             'order' => $order,

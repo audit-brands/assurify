@@ -42,16 +42,16 @@ class MessageController extends BaseController
             $messages = $this->messageService->getInboxMessages($user, $page);
             $unreadCount = $this->messageService->getUnreadMessageCount($user);
 
-            return $this->render($response, 'messages/inbox.php', [
-                'title' => 'Messages',
+            return $this->render($response, 'messages/inbox', [
+                'title' => 'Messages | Assurify',
                 'messages' => $messages,
                 'unread_count' => $unreadCount,
                 'current_page' => $page,
                 'user' => $user
             ]);
         } catch (\Exception $e) {
-            return $this->render($response, 'messages/inbox.php', [
-                'title' => 'Messages',
+            return $this->render($response, 'messages/inbox', [
+                'title' => 'Messages | Assurify',
                 'messages' => [],
                 'unread_count' => 0,
                 'current_page' => 1,
@@ -81,15 +81,15 @@ class MessageController extends BaseController
         try {
             $messages = $this->messageService->getSentMessages($user, $page);
 
-            return $this->render($response, 'messages/sent.php', [
-                'title' => 'Sent Messages',
+            return $this->render($response, 'messages/sent', [
+                'title' => 'Sent Messages | Assurify',
                 'messages' => $messages,
                 'current_page' => $page,
                 'user' => $user
             ]);
         } catch (\Exception $e) {
-            return $this->render($response, 'messages/sent.php', [
-                'title' => 'Sent Messages',
+            return $this->render($response, 'messages/sent', [
+                'title' => 'Sent Messages | Assurify',
                 'messages' => [],
                 'current_page' => 1,
                 'user' => $user,
@@ -121,16 +121,16 @@ class MessageController extends BaseController
         if ($recipientUsername) {
             $recipient = User::where('username', $recipientUsername)->first();
             if (!$recipient) {
-                return $this->render($response, 'messages/compose.php', [
-                    'title' => 'Compose Message',
+                return $this->render($response, 'messages/compose', [
+                    'title' => 'Compose Message | Assurify',
                     'user' => $user,
                     'error' => "User '{$recipientUsername}' not found."
                 ]);
             }
         }
 
-        return $this->render($response, 'messages/compose.php', [
-            'title' => 'Compose Message',
+        return $this->render($response, 'messages/compose', [
+            'title' => 'Compose Message | Assurify',
             'user' => $user,
             'recipient_username' => $recipientUsername,
             'subject' => $subject,
@@ -176,8 +176,8 @@ class MessageController extends BaseController
                           ->withStatus(302);
 
         } catch (\Exception $e) {
-            return $this->render($response, 'messages/compose.php', [
-                'title' => 'Compose Message',
+            return $this->render($response, 'messages/compose', [
+                'title' => 'Compose Message | Assurify',
                 'user' => $user,
                 'recipient_username' => $recipientUsername,
                 'subject' => $subject,
@@ -207,21 +207,21 @@ class MessageController extends BaseController
             $thread = $this->messageService->getMessageThread($shortId, $user);
 
             if (!$thread) {
-                return $this->render($response, 'error.php', [
+                return $this->render($response, 'error', [
                     'title' => 'Message Not Found',
                     'message' => 'The requested message was not found or you do not have permission to view it.',
                     'user' => $user
                 ])->withStatus(404);
             }
 
-            return $this->render($response, 'messages/show.php', [
+            return $this->render($response, 'messages/show', [
                 'title' => $thread['message']['subject'],
                 'thread' => $thread,
                 'user' => $user
             ]);
 
         } catch (\Exception $e) {
-            return $this->render($response, 'error.php', [
+            return $this->render($response, 'error', [
                 'title' => 'Error',
                 'message' => 'Failed to load message: ' . $e->getMessage(),
                 'user' => $user
@@ -328,8 +328,8 @@ class MessageController extends BaseController
             }
         }
 
-        return $this->render($response, 'messages/search.php', [
-            'title' => 'Search Messages',
+        return $this->render($response, 'messages/search', [
+            'title' => 'Search Messages | Assurify',
             'query' => $query,
             'results' => $results,
             'current_page' => $page,

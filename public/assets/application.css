@@ -2625,7 +2625,7 @@ img.image-error::after {
 	border-color: #ff6600;
 }
 
-/* Comment styles */
+/* Comments page - exact Lobste.rs styling */
 .comments-section {
 	margin-top: 20px;
 }
@@ -2648,53 +2648,45 @@ img.image-error::after {
 	min-height: 100px;
 }
 
-.comment {
-	border-left: 2px solid var(--color-fg-contrast-4-5);
-	margin: 10px 0;
-	padding: 10px 0 10px 15px;
+/* Exact Lobste.rs comment structure */
+.comment .details {
+	margin-left: 45px;
 }
 
-.comment-header {
-	display: flex;
-	align-items: flex-start;
-	margin-bottom: 8px;
-	width: 100%;
+.comment .byline {
+	font-size: 9pt;
+	color: var(--color-fg-contrast-10);
+	margin-bottom: 0.5em;
 }
 
-.comment-meta {
-	flex: 1;
-	margin-left: 8px;
+.comment .byline img.avatar {
+	width: 16px;
+	height: 16px;
+	margin-right: 3px;
+	vertical-align: middle;
 }
 
-.comment-info {
-	flex: 1;
-	margin-left: 8px;
-	display: flex;
-	align-items: center;
-	flex-wrap: wrap;
-	gap: 8px;
+div.comment_text {
+	line-height: 1.4em;
+	margin-bottom: 1em;
 }
 
-.comment-content {
-	margin-top: 8px;
-	color: var(--color-fg);
-	line-height: 1.4;
+div.comment_text p {
+	margin: 0.8em 0;
 }
 
-.comment-actions {
-	display: inline-block;
-	margin-left: 10px;
+div.comment_text p:first-child {
+	margin-top: 0;
 }
 
-.comment-actions a {
-	color: var(--color-fg-contrast-7-5);
-	text-decoration: none;
-	margin-right: 8px;
-	font-size: 10pt;
-}
-
-.comment-actions a:hover {
+/* Exact comment actions styling */
+.comment .byline a {
 	color: var(--color-fg-link);
+	text-decoration: none;
+}
+
+.comment .byline a:hover {
+	text-decoration: underline;
 }
 
 .reply-form {
@@ -2712,16 +2704,6 @@ img.image-error::after {
 	margin-left: 20px;
 	border-left: 1px solid var(--color-fg-contrast-4-5);
 }
-
-/* Comment toggle button styling */
-.comment-toggle {
-	background: none;
-	border: none;
-	color: var(--color-fg-contrast-6);
-	font-family: monospace;
-	font-size: 12px;
-	cursor: pointer;
-	padding: 0 4px;
 	margin-right: 6px;
 	line-height: 1;
 	min-width: 18px;
@@ -3168,7 +3150,7 @@ img.avatar {
 }
 
 .submit-button {
-	background: var(--color-fg-link);
+	background: var(--color-accent);
 	color: white;
 	border: none;
 	padding: 10px 20px;
@@ -3178,7 +3160,7 @@ img.avatar {
 }
 
 .submit-button:hover {
-	background: var(--color-fg-link-hover);
+	background: var(--color-accent-hover);
 }
 
 .cancel-link {

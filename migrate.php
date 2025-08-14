@@ -13,17 +13,9 @@ $dotenv->load();
 // Setup database connection
 $capsule = new DB;
 $capsule->addConnection([
-    'driver' => 'mysql',
-    'host' => $_ENV['DB_HOST'],
-    'port' => $_ENV['DB_PORT'],
-    'database' => $_ENV['DB_DATABASE'],
-    'username' => $_ENV['DB_USERNAME'],
-    'password' => $_ENV['DB_PASSWORD'],
-    'charset' => 'utf8mb4',
-    'collation' => 'utf8mb4_unicode_ci',
+    'driver' => $_ENV['DB_CONNECTION'] ?? 'sqlite',
+    'database' => $_ENV['DB_DATABASE'] ?? __DIR__ . '/database.sqlite',
     'prefix' => '',
-    'strict' => true,
-    'engine' => null,
 ]);
 
 $capsule->setAsGlobal();

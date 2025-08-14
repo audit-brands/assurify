@@ -166,6 +166,7 @@ class UserController extends BaseController
         
         // Convert checkbox values to booleans
         $settings = [
+            'email' => $data['email'] ?? '',
             'show_avatars' => isset($data['show_avatars']),
             'show_story_previews' => isset($data['show_story_previews']),
             'show_read_ribbons' => isset($data['show_read_ribbons']),
@@ -174,7 +175,11 @@ class UserController extends BaseController
             'homepage' => $data['homepage'] ?? '',
             'github_username' => $data['github_username'] ?? '',
             'twitter_username' => $data['twitter_username'] ?? '',
-            'about' => $data['about'] ?? ''
+            'mastodon_username' => $data['mastodon_username'] ?? '',
+            'linkedin_username' => $data['linkedin_username'] ?? '',
+            'bluesky_username' => $data['bluesky_username'] ?? '',
+            'about' => $data['about'] ?? '',
+            'allow_messages_from' => $data['allow_messages_from'] ?? 'members'
         ];
 
         // Handle tag preferences
@@ -193,16 +198,22 @@ class UserController extends BaseController
             $favoriteTags = array_filter($favoriteTags);
         }
 
-        $settingsUpdated = $this->userService->updateUserSettings($user, $settings);
-        $tagPrefsUpdated = $this->userService->updateUserTagPreferences($user, $filteredTags, $favoriteTags);
+        try {
+            $settingsUpdated = $this->userService->updateUserSettings($user, $settings);
+            $tagPrefsUpdated = $this->userService->updateUserTagPreferences($user, $filteredTags, $favoriteTags);
 
-        if ($settingsUpdated && $tagPrefsUpdated) {
-            $_SESSION['settings_success'] = 'Settings and tag preferences updated successfully!';
-        } elseif ($settingsUpdated) {
-            $_SESSION['settings_success'] = 'Settings updated successfully, but tag preferences failed to update.';
-        } elseif ($tagPrefsUpdated) {
-            $_SESSION['settings_success'] = 'Tag preferences updated successfully, but settings failed to update.';
-        } else {
+            if ($settingsUpdated && $tagPrefsUpdated) {
+                $_SESSION['settings_success'] = 'Settings and tag preferences updated successfully!';
+            } elseif ($settingsUpdated) {
+                $_SESSION['settings_success'] = 'Settings updated successfully, but tag preferences failed to update.';
+            } elseif ($tagPrefsUpdated) {
+                $_SESSION['settings_success'] = 'Tag preferences updated successfully, but settings failed to update.';
+            } else {
+                $_SESSION['settings_error'] = 'Failed to update settings. Please try again.';
+            }
+        } catch (\InvalidArgumentException $e) {
+            $_SESSION['settings_error'] = $e->getMessage();
+        } catch (\Exception $e) {
             $_SESSION['settings_error'] = 'Failed to update settings. Please try again.';
         }
 

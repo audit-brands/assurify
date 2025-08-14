@@ -18,6 +18,13 @@ class User extends Model
         'is_moderator',
         'karma',
         'about',
+        'homepage',
+        'github_username',
+        'twitter_username',
+        'mastodon_username',
+        'linkedin_username',
+        'bluesky_username',
+        'invited_by_user_id',
         'email_notifications',
         'pushover_notifications',
         'pushover_user_key',
@@ -82,6 +89,12 @@ class User extends Model
     public function invitations(): HasMany
     {
         return $this->hasMany(Invitation::class);
+    }
+
+    // User who invited this user
+    public function invitedBy(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'invited_by_user_id');
     }
 
     // Messages sent by this user

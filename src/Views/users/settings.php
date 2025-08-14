@@ -17,6 +17,16 @@
 
     <form method="post" action="/settings" class="settings-form">
         <div class="settings-section">
+            <h2>Account Settings</h2>
+            
+            <div class="form-group">
+                <label for="email" class="required">Email Address:</label>
+                <input type="email" name="email" id="email" value="<?=$this->e($settings['email'])?>" required inputmode="email">
+                <small>Used for account recovery and notifications (if enabled).</small>
+            </div>
+        </div>
+
+        <div class="settings-section">
             <h2>Profile Information</h2>
             
             <div class="form-group">
@@ -31,13 +41,31 @@
             </div>
 
             <div class="form-group">
+                <label for="linkedin_username">LinkedIn Profile:</label>
+                <input type="text" name="linkedin_username" id="linkedin_username" value="<?=$this->e($settings['linkedin_username'] ?? '')?>" placeholder="profilename">
+                <small>Include your LinkedIn profile name (e.g. linkedin.com/in/profilename)</small>
+            </div>
+
+            <div class="form-group">
                 <label for="github_username">GitHub Username:</label>
                 <input type="text" name="github_username" id="github_username" value="<?=$this->e($settings['github_username'])?>" placeholder="username">
             </div>
 
             <div class="form-group">
+                <label for="bluesky_username">Bluesky Handle:</label>
+                <input type="text" name="bluesky_username" id="bluesky_username" value="<?=$this->e($settings['bluesky_username'] ?? '')?>" placeholder="username.bsky.social">
+                <small>Your full Bluesky handle (e.g., username.bsky.social)</small>
+            </div>
+
+            <div class="form-group">
                 <label for="twitter_username">Twitter Username:</label>
                 <input type="text" name="twitter_username" id="twitter_username" value="<?=$this->e($settings['twitter_username'])?>" placeholder="username">
+            </div>
+
+            <div class="form-group">
+                <label for="mastodon_username">Mastodon Handle:</label>
+                <input type="text" name="mastodon_username" id="mastodon_username" value="<?=$this->e($settings['mastodon_username'] ?? '')?>" placeholder="@username@instance.social">
+                <small>Include your full Mastodon handle with the instance (e.g., @username@mastodon.social)</small>
             </div>
         </div>
 
@@ -49,6 +77,17 @@
                     <input type="checkbox" name="show_email" <?= $settings['show_email'] ? 'checked' : '' ?>>
                     Show email address on profile
                 </label>
+            </div>
+
+            <div class="form-group">
+                <label for="allow_messages_from">Who can send you private messages:</label>
+                <select name="allow_messages_from" id="allow_messages_from">
+                    <option value="anyone" <?= ($settings['allow_messages_from'] ?? 'members') === 'anyone' ? 'selected' : '' ?>>Anyone</option>
+                    <option value="members" <?= ($settings['allow_messages_from'] ?? 'members') === 'members' ? 'selected' : '' ?>>Members only</option>
+                    <option value="followed_users" <?= ($settings['allow_messages_from'] ?? 'members') === 'followed_users' ? 'selected' : '' ?>>Users I follow only</option>
+                    <option value="none" <?= ($settings['allow_messages_from'] ?? 'members') === 'none' ? 'selected' : '' ?>>No one</option>
+                </select>
+                <small>Control who can send you direct messages. This setting helps you manage unsolicited messages.</small>
             </div>
         </div>
 

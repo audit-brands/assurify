@@ -42,12 +42,12 @@
             </div>
             <div class="stat">
                 <div class="stat-number"><?=$user['created_at_formatted']?></div>
-                <div class="stat-label">joined</div>
+                <div class="stat-label">joined<?php if ($user['invited_by']) : ?> by invitation from <a href="/u/<?=$this->e($user['invited_by']['username'])?>"><?=$this->e($user['invited_by']['username'])?></a><?php endif ?></div>
             </div>
         </div>
     </div>
 
-    <?php if ($user['about'] || $user['homepage'] || $user['github_username'] || $user['twitter_username'] || ($user['show_email'] && $user['email'])) : ?>
+    <?php if ($user['about'] || $user['homepage'] || $user['github_username'] || $user['twitter_username'] || $user['mastodon_username'] || $user['linkedin_username'] || $user['bluesky_username'] || ($user['show_email'] && $user['email'])) : ?>
         <div class="user-info">
             <?php if ($user['about']) : ?>
                 <div class="user-about">
@@ -56,7 +56,7 @@
                 </div>
             <?php endif ?>
             
-            <?php if ($user['homepage'] || $user['github_username'] || $user['twitter_username'] || ($user['show_email'] && $user['email'])) : ?>
+            <?php if ($user['homepage'] || $user['github_username'] || $user['twitter_username'] || $user['mastodon_username'] || $user['linkedin_username'] || $user['bluesky_username'] || ($user['show_email'] && $user['email'])) : ?>
                 <div class="user-links">
                     <h3>Links</h3>
                     <ul>
@@ -71,6 +71,15 @@
                         <?php endif ?>
                         <?php if ($user['twitter_username']) : ?>
                             <li><strong>Twitter:</strong> <a href="https://twitter.com/<?=$this->e($user['twitter_username'])?>" target="_blank" rel="noopener">@<?=$this->e($user['twitter_username'])?></a></li>
+                        <?php endif ?>
+                        <?php if ($user['mastodon_username']) : ?>
+                            <li><strong>Mastodon:</strong> <?=$this->e($user['mastodon_username'])?></li>
+                        <?php endif ?>
+                        <?php if ($user['linkedin_username']) : ?>
+                            <li><strong>LinkedIn:</strong> <a href="https://www.linkedin.com/in/<?=$this->e($user['linkedin_username'])?>" target="_blank" rel="noopener">linkedin.com/in/<?=$this->e($user['linkedin_username'])?></a></li>
+                        <?php endif ?>
+                        <?php if ($user['bluesky_username']) : ?>
+                            <li><strong>Bluesky:</strong> <a href="https://bsky.app/profile/<?=$this->e($user['bluesky_username'])?>" target="_blank" rel="noopener">@<?=$this->e($user['bluesky_username'])?></a></li>
                         <?php endif ?>
                     </ul>
                 </div>

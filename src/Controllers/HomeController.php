@@ -35,8 +35,16 @@ class HomeController extends BaseController
             unset($_SESSION['story_success']); // Clear after showing
         }
 
+        // Check if this is the /active route to set appropriate title
+        $path = $request->getUri()->getPath();
+        $title = ($path === '/active') ? 'Active | Assurify' : 'Assurify';
+        
+        // Set section header - both homepage and /active should show "Active Stories"
+        $sectionHeader = 'Active Stories';
+
         return $this->render($response, 'home/index', [
-            'title' => 'Assurify',
+            'title' => $title,
+            'section_header' => $sectionHeader,
             'stories' => $stories,
             'success' => $success
         ]);

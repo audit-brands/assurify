@@ -16,9 +16,19 @@ class MessageService
      */
     public function sendMessage(User $author, User $recipient, string $subject, string $body): Message
     {
-        // Check if recipient accepts messages
-        if ($recipient->disable_private_messages) {
-            throw new \Exception("User {$recipient->username} is not accepting private messages.");
+        // Check if recipient accepts messages based on their privacy settings
+        if (!$this->canUserReceiveMessage($author, $recipient)) {
+            $profile = $recipient->getProfile();
+            $setting = $profile->allow_messages_from ?? 'members';
+            
+            $message = match ($setting) {
+                'none' => "User {$recipient->username} is not accepting private messages.",
+                'followed_users' => "User {$recipient->username} only accepts messages from users they follow.",
+                'members' => "User {$recipient->username} only accepts messages from registered members.",
+                default => "You cannot send a message to {$recipient->username}."
+            };
+            
+            throw new \Exception($message);
         }
 
         // Validate message data
@@ -388,6 +398,23 @@ class MessageService
     {
         // TODO: Implement email notification for replies
         // This would integrate with your email service
+    }
+
+    /**
+     * Check if a user can receive messages from another user
+     */
+    private function canUserReceiveMessage(User $author, User $recipient): bool
+    {
+        $profile = $recipient->getProfile();
+        $setting = $profile->allow_messages_from ?? 'members';
+        
+        return match ($setting) {
+            'anyone' => true,
+            'members' => $author->id !== null, // Registered user
+            'followed_users' => $recipient->isFollowing($author->id),
+            'none' => false,
+            default => true
+        };
     }
 
     /**

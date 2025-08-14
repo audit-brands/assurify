@@ -76,7 +76,7 @@
         </main>
 
         <footer id="footer">
-            <p>&copy; <?=date('Y')?> Assurify Platform</p>
+            <p>Made with Love by <a href="https://auditbrands" target="_blank" rel="noopener">AuditBrands</a>. All Rights Reserved.</p>
         </footer>
     </div>
 

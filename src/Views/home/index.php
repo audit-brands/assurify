@@ -1,7 +1,7 @@
 <?php $this->layout('layout', ['title' => $title]) ?>
 
 <div class="stories">
-    <h1>Assurify</h1>
+    <h1><?=$this->e($section_header ?? 'Stories')?></h1>
     
     <?php if ($success) : ?>
         <div class="success-message">
