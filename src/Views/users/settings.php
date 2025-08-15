@@ -1,5 +1,26 @@
 <?php $this->layout('layout', ['title' => $title]) ?>
 
+<style>
+/* Consistent button styling to match logout button */
+.submit-button {
+    padding: 0.5em 1em;
+    background: #ff4444;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 14px;
+    white-space: nowrap;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.submit-button:hover {
+    background: #cc3333;
+    text-decoration: none;
+}
+</style>
+
 <div class="settings-page">
     <h1>Account Settings</h1>
 
