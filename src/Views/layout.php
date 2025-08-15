@@ -80,12 +80,12 @@
                 <a href="/about">About</a>
                 <a href="/tags">Tags</a>
                 <a href="/filter">Filter</a>
-                <a href="/moderation-log">Moderation Log</a>
+                <a href="/moderations">Moderation Log</a>
             </nav>
         </footer>
     </div>
 
-    <script src="/assets/application.js"></script>
+    <script src="/assets/application.js?v=<?=time()?>"></script>
     <script src="/assets/performance.js"></script>
     
     <!-- Temporarily disable problematic scripts that are causing 401 errors -->

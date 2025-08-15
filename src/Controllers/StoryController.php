@@ -40,11 +40,13 @@ class StoryController extends BaseController
         $comments = $this->commentService->getCommentsForStory($story);
         $commentTree = $this->commentService->buildCommentTree($comments);
 
-        // Check if current user can edit this story
+        // Check if current user can edit this story and if they're a moderator
         $canEdit = false;
+        $isModerator = false;
         if (isset($_SESSION['user_id'])) {
             $user = \App\Models\User::find($_SESSION['user_id']);
             $canEdit = $story->isEditableByUser($user);
+            $isModerator = $user && ($user->is_admin || $user->is_moderator);
         }
 
         return $this->render($response, 'stories/show', [
@@ -52,7 +54,8 @@ class StoryController extends BaseController
             'story' => $storyData,
             'comments' => $commentTree,
             'total_comments' => count($comments),
-            'can_edit' => $canEdit
+            'can_edit' => $canEdit,
+            'is_moderator' => $isModerator
         ]);
     }
 

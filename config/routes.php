@@ -13,6 +13,8 @@ use App\Controllers\InvitationController;
 use App\Controllers\SearchController;
 use App\Controllers\ModerationController;
 use App\Controllers\AdminController;
+use App\Controllers\Mod\StoriesController as ModStoriesController;
+use App\Controllers\Mod\CommentsController as ModCommentsController;
 use App\Controllers\PageController;
 use App\Controllers\Api\AuthApiController;
 use App\Controllers\Api\StoriesApiController;
@@ -61,7 +63,6 @@ $app->get('/about', [PageController::class, 'about']);
 $app->get('/tags', [PageController::class, 'tags']);
 $app->get('/filter', [PageController::class, 'filter']);
 $app->post('/filter', [PageController::class, 'filter']);
-$app->get('/moderation-log', [PageController::class, 'moderationLog']);
 
 // User routes
 $app->get('/u/{username}', [UserController::class, 'show']);
@@ -117,13 +118,30 @@ $app->get('/feeds/comments.rss', [CommentController::class, 'commentsFeed']);
 $app->get('/t/{tag}/rss', [TagController::class, 'feed']);
 $app->get('/u/{username}/rss', [UserController::class, 'feed']);
 
-// Moderation routes
-$app->group('/moderation', function (RouteCollectorProxy $group) {
+// Public moderation transparency (like Lobste.rs)
+$app->get('/moderations', [ModerationController::class, 'moderationLog']);
+
+// Moderation interface (/mod namespace - requires moderator access)
+$app->group('/mod', function (RouteCollectorProxy $group) {
+    // Moderation dashboard and tools (admin-only)
     $group->get('', [ModerationController::class, 'dashboard']);
     $group->get('/flagged', [ModerationController::class, 'flaggedContent']);
-    $group->get('/log', [ModerationController::class, 'moderationLog']);
-    $group->post('/stories/{id}', [ModerationController::class, 'moderateStory']);
-    $group->post('/comments/{id}', [ModerationController::class, 'moderateComment']);
+    
+    // Story moderation
+    $group->get('/stories/{short_id}/edit', [ModStoriesController::class, 'edit']);
+    $group->post('/stories/{short_id}/update', [ModStoriesController::class, 'update']);
+    $group->post('/stories/{short_id}/delete', [ModStoriesController::class, 'delete']);
+    $group->post('/stories/{short_id}/undelete', [ModStoriesController::class, 'undelete']);
+    
+    // Comment moderation
+    $group->get('/comments/{short_id}/edit', [ModCommentsController::class, 'edit']);
+    $group->post('/comments/{short_id}/update', [ModCommentsController::class, 'update']);
+    $group->post('/comments/{short_id}/delete', [ModCommentsController::class, 'delete']);
+    $group->post('/comments/{short_id}/undelete', [ModCommentsController::class, 'undelete']);
+    
+    // User and content moderation actions
+    $group->post('/stories/{id}/moderate', [ModerationController::class, 'moderateStory']);
+    $group->post('/comments/{id}/moderate', [ModerationController::class, 'moderateComment']);
     $group->post('/users/{id}/ban', [ModerationController::class, 'banUser']);
     $group->post('/users/{id}/unban', [ModerationController::class, 'unbanUser']);
 });

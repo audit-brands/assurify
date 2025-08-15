@@ -41,28 +41,28 @@ class CommentService
         // Validate input
         $this->validateCommentData($data);
 
-        // Temporarily disable duplicate detection to fix false positives
-        // TODO: Re-enable with proper logic after debugging
-        /*
-        // Check for duplicate comments (same user, story, parent, content within last 2 minutes)
+        // Check for duplicate comments (same user, story, parent, content within last 30 seconds only)
+        // This is a safety net to catch any remaining edge cases
         $commentText = trim($data['comment']);
         $parentCommentId = $data['parent_comment_id'] ?? null;
         
-        // Debug logging
-        error_log("Duplicate check - User: {$user->id}, Story: {$story->id}, Parent: " . ($parentCommentId ?? 'null') . ", Text: '{$commentText}'");
-        
-        $duplicateComment = Comment::where('user_id', $user->id)
+        $query = Comment::where('user_id', $user->id)
             ->where('story_id', $story->id)
             ->where('comment', $commentText)
-            ->where('parent_comment_id', $parentCommentId) // Include parent comment in duplicate check
-            ->where('created_at', '>', date('Y-m-d H:i:s', strtotime('-2 minutes')))
-            ->first();
+            ->where('created_at', '>', Carbon::now()->subSeconds(30));
+            
+        // Handle null parent_comment_id properly
+        if ($parentCommentId === null) {
+            $query->whereNull('parent_comment_id');
+        } else {
+            $query->where('parent_comment_id', $parentCommentId);
+        }
+        
+        $duplicateComment = $query->first();
 
         if ($duplicateComment) {
-            error_log("Found duplicate - ID: {$duplicateComment->id}, Parent: " . ($duplicateComment->parent_comment_id ?? 'null') . ", Text: '{$duplicateComment->comment}', Created: {$duplicateComment->created_at}");
-            throw new \Exception("Duplicate comment detected. Please wait before posting the same comment again. (Debug: Found existing comment ID {$duplicateComment->id})");
+            throw new \Exception("Duplicate submission detected. Please wait a moment before posting again.");
         }
-        */
 
         // Create comment
         $comment = new Comment();
@@ -94,17 +94,23 @@ class CommentService
 
         $comment->save();
 
-        // Add submitter's upvote (only if they haven't already voted on this story)
-        $existingVote = Vote::where('user_id', $user->id)
-                          ->where('story_id', $story->id)
-                          ->first();
-        
-        if (!$existingVote) {
-            $this->castVote($comment, $user, 1);
-        }
+        // Perform post-creation operations (don't let failures here affect comment creation)
+        try {
+            // Add submitter's upvote (only if they haven't already voted on this story)
+            $existingVote = Vote::where('user_id', $user->id)
+                              ->where('story_id', $story->id)
+                              ->first();
+            
+            if (!$existingVote) {
+                $this->castVote($comment, $user, 1);
+            }
 
-        // Update story comment count
-        $this->updateStoryCommentCount($story);
+            // Update story comment count
+            $this->updateStoryCommentCount($story);
+        } catch (\Exception $e) {
+            // Log the error but don't fail the comment creation
+            error_log("Post-comment creation operations failed: " . $e->getMessage());
+        }
 
         return $comment;
     }

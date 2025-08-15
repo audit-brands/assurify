@@ -7,6 +7,7 @@ namespace App\Controllers;
 use App\Services\AdminService;
 use App\Services\PerformanceService;
 use App\Services\CacheService;
+use App\Models\Moderation;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use League\Plates\Engine;
@@ -206,6 +207,22 @@ class AdminController extends BaseController
                 'is_active' => true
             ]);
 
+            // Log the moderation action
+            $user = \App\Models\User::find($_SESSION['user_id']);
+            if ($user) {
+                Moderation::log(
+                    $user,
+                    'created category',
+                    [
+                        'subject_type' => 'category',
+                        'subject_id' => $category->id,
+                        'subject_title' => $name
+                    ],
+                    null,
+                    ['description' => $description]
+                );
+            }
+
             return $this->json($response, [
                 'success' => true,
                 'message' => 'Category added successfully',
@@ -244,10 +261,37 @@ class AdminController extends BaseController
                 return $this->json($response, ['error' => 'Category name already exists'], 400);
             }
 
+            $originalName = $category->name;
+            $originalDescription = $category->description;
+            
             $category->update([
                 'name' => $name,
                 'description' => $description ?: null
             ]);
+
+            // Log the moderation action
+            $user = \App\Models\User::find($_SESSION['user_id']);
+            if ($user) {
+                $changes = [];
+                if ($originalName !== $name) {
+                    $changes['name'] = ['from' => $originalName, 'to' => $name];
+                }
+                if ($originalDescription !== ($description ?: null)) {
+                    $changes['description'] = ['from' => $originalDescription, 'to' => $description ?: null];
+                }
+                
+                Moderation::log(
+                    $user,
+                    'updated category',
+                    [
+                        'subject_type' => 'category',
+                        'subject_id' => $category->id,
+                        'subject_title' => $name
+                    ],
+                    null,
+                    ['changes' => $changes]
+                );
+            }
 
             return $this->json($response, [
                 'success' => true,
@@ -274,12 +318,30 @@ class AdminController extends BaseController
 
         try {
             $category = \App\Models\TagCategory::findOrFail($categoryId);
+            $categoryName = $category->name;
+            $tagCount = \App\Models\Tag::where('category_id', $categoryId)->count();
             
             // Move all tags in this category to uncategorized
             \App\Models\Tag::where('category_id', $categoryId)->update(['category_id' => null]);
             
             // Delete the category
             $category->delete();
+
+            // Log the moderation action
+            $user = \App\Models\User::find($_SESSION['user_id']);
+            if ($user) {
+                Moderation::log(
+                    $user,
+                    'deleted category',
+                    [
+                        'subject_type' => 'category',
+                        'subject_id' => $categoryId,
+                        'subject_title' => $categoryName
+                    ],
+                    null,
+                    ['tags_moved_to_uncategorized' => $tagCount]
+                );
+            }
 
             return $this->json($response, [
                 'success' => true,
@@ -309,8 +371,24 @@ class AdminController extends BaseController
         try {
             $tag = \App\Models\Tag::findOrFail($tagId);
             $category = \App\Models\TagCategory::findOrFail($categoryId);
+            $oldCategory = $tag->category;
             
             $tag->update(['category_id' => $categoryId]);
+
+            // Log the moderation action
+            $user = \App\Models\User::find($_SESSION['user_id']);
+            if ($user) {
+                Moderation::log(
+                    $user,
+                    Moderation::ACTION_TAG_CATEGORY_CHANGE,
+                    $tag,
+                    null,
+                    [
+                        'from_category' => $oldCategory ? $oldCategory->name : 'Uncategorized',
+                        'to_category' => $category->name
+                    ]
+                );
+            }
 
             return $this->json($response, [
                 'success' => true,
@@ -339,6 +417,7 @@ class AdminController extends BaseController
         try {
             $tag = \App\Models\Tag::findOrFail($tagId);
             $currentCategory = $tag->category;
+            $user = \App\Models\User::find($_SESSION['user_id']);
             
             // If tag is already in "Other" category, move it to a different default category
             if ($currentCategory && $currentCategory->name === 'Other') {
@@ -350,6 +429,21 @@ class AdminController extends BaseController
                 
                 if ($defaultCategory) {
                     $tag->update(['category_id' => $defaultCategory->id]);
+                    
+                    // Log the moderation action
+                    if ($user) {
+                        Moderation::log(
+                            $user,
+                            Moderation::ACTION_TAG_CATEGORY_CHANGE,
+                            $tag,
+                            null,
+                            [
+                                'from_category' => 'Other',
+                                'to_category' => $defaultCategory->name
+                            ]
+                        );
+                    }
+                    
                     return $this->json($response, [
                         'success' => true,
                         'message' => "Tag moved to {$defaultCategory->name} category"
@@ -371,6 +465,21 @@ class AdminController extends BaseController
                 );
                 
                 $tag->update(['category_id' => $otherCategory->id]);
+                
+                // Log the moderation action
+                if ($user) {
+                    Moderation::log(
+                        $user,
+                        Moderation::ACTION_TAG_CATEGORY_CHANGE,
+                        $tag,
+                        null,
+                        [
+                            'from_category' => $currentCategory ? $currentCategory->name : 'Uncategorized',
+                            'to_category' => 'Other'
+                        ]
+                    );
+                }
+                
                 return $this->json($response, [
                     'success' => true,
                     'message' => 'Tag moved to Other category'

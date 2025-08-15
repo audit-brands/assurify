@@ -180,22 +180,64 @@ class ModerationController extends BaseController
 
     public function moderationLog(Request $request, Response $response): Response
     {
-        if (!$this->requireModerator()) {
-            return $this->render($response, 'errors/forbidden', [
-                'title' => 'Access Denied | Lobsters'
-            ])->withStatus(403);
-        }
-
+        // Make moderation log public for transparency (like Lobste.rs)
         $queryParams = $request->getQueryParams();
         $page = max(1, (int) ($queryParams['page'] ?? 1));
+        $moderator = $queryParams['moderator'] ?? null;
+        $action = $queryParams['action'] ?? null;
+        $subjectType = $queryParams['subject_type'] ?? null;
         $limit = 50;
+        $offset = ($page - 1) * $limit;
 
-        $moderationLog = $this->moderationService->getModerationLog($limit);
+        // Build query for moderation log
+        $query = \App\Models\Moderation::with(['moderator'])
+                                      ->orderBy('created_at', 'desc');
 
-        return $this->render($response, 'moderation/log', [
-            'title' => 'Moderation Log | Lobsters',
-            'log_entries' => $moderationLog,
-            'page' => $page
+        // Apply filters
+        if ($moderator) {
+            $user = \App\Models\User::where('username', $moderator)->first();
+            if ($user) {
+                $query->byModerator($user);
+            }
+        }
+
+        if ($action) {
+            $query->byAction($action);
+        }
+
+        if ($subjectType) {
+            $query->bySubjectType($subjectType);
+        }
+
+        // Get total count for pagination
+        $totalCount = $query->count();
+        
+        // Get paginated results
+        $moderations = $query->skip($offset)->take($limit)->get();
+
+        // Get available moderators and actions for filters
+        $moderators = \App\Models\User::whereHas('moderations', function($query) {
+            $query->where('moderator_user_id', '!=', null);
+        })->distinct()->pluck('username')->sort();
+
+        $actions = \App\Models\Moderation::distinct()->pluck('action')->sort();
+        $subjectTypes = \App\Models\Moderation::distinct()->pluck('subject_type')->filter()->sort();
+
+        return $this->render($response, 'pages/moderation-log', [
+            'title' => 'Moderation Log | Assurify',
+            'moderations' => $moderations,
+            'page' => $page,
+            'total_pages' => (int) ceil($totalCount / $limit),
+            'has_prev' => $page > 1,
+            'has_next' => $page < ceil($totalCount / $limit),
+            'filters' => [
+                'moderator' => $moderator,
+                'action' => $action,
+                'subject_type' => $subjectType
+            ],
+            'available_moderators' => $moderators,
+            'available_actions' => $actions,
+            'available_subject_types' => $subjectTypes
         ]);
     }
 

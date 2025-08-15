@@ -37,6 +37,27 @@ class CommentController extends BaseController
                 return $this->json($response, ['error' => 'Story not found'], 404);
             }
 
+            // Add submission token to prevent duplicate requests (optional for now)
+            $submissionToken = $data['submission_token'] ?? null;
+            
+            if ($submissionToken) {
+                // Check if this token was already used (store in session temporarily)
+                $sessionKey = 'comment_tokens';
+                if (!isset($_SESSION[$sessionKey])) {
+                    $_SESSION[$sessionKey] = [];
+                }
+                
+                if (in_array($submissionToken, $_SESSION[$sessionKey])) {
+                    return $this->json($response, ['error' => 'Duplicate submission detected'], 400);
+                }
+                
+                // Mark token as used
+                $_SESSION[$sessionKey][] = $submissionToken;
+                
+                // Clean up old tokens (keep only last 10)
+                $_SESSION[$sessionKey] = array_slice($_SESSION[$sessionKey], -10);
+            }
+
             $commentData = [
                 'comment' => $data['comment'] ?? '',
                 'parent_comment_id' => $data['parent_comment_id'] ?? null,

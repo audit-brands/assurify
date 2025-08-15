@@ -62,6 +62,16 @@ $this->layout('layout', ['title' => $title]) ?>
         <?php if ($can_edit ?? false) : ?>
             <a href="/s/<?=$this->e($story['short_id'])?>/edit">edit</a>
         <?php endif ?>
+        
+        <?php if ($is_moderator ?? false) : ?>
+            <span class="mod-separator">|</span>
+            <a href="/mod/stories/<?=$this->e($story['short_id'])?>/edit" class="mod-link">mod edit</a>
+            <?php if ($story['is_deleted'] ?? false) : ?>
+                <a href="/mod/stories/<?=$this->e($story['short_id'])?>/undelete" class="mod-link mod-undelete">undelete</a>
+            <?php else : ?>
+                <a href="/mod/stories/<?=$this->e($story['short_id'])?>/delete" class="mod-link mod-delete">delete</a>
+            <?php endif ?>
+        <?php endif ?>
     </div>
     
     <div class="comments-section" id="comments">
@@ -145,93 +155,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Comment form submission
-    document.querySelectorAll('.comment-form').forEach(form => {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Prevent duplicate submissions
-            if (this.dataset.submitting === 'true') {
-                console.log('Form already submitting, ignoring duplicate submission');
-                return;
-            }
-            this.dataset.submitting = 'true';
-            
-            const storyId = this.dataset.storyId || document.querySelector('[data-story-id]')?.dataset.storyId;
-            const parentId = this.dataset.parentId || null;
-            const textarea = this.querySelector('textarea[name="comment"]');
-            const comment = textarea.value.trim();
-            
-            if (!comment) {
-                alert('Please enter a comment.');
-                this.dataset.submitting = 'false';
-                return;
-            }
-            
-            const submitBtn = this.querySelector('button[type="submit"]');
-            const originalText = submitBtn.textContent;
-            submitBtn.textContent = 'Posting...';
-            submitBtn.disabled = true;
-            
-            fetch('/comments', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    story_id: storyId,
-                    comment: comment,
-                    parent_comment_id: parentId
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Close the reply form
-                    const replyForm = this.closest('.reply-form');
-                    if (replyForm) {
-                        replyForm.style.setProperty('display', 'none', 'important');
-                        replyForm.classList.remove('force-visible');
-                        
-                        // Find and update the reply link text
-                        const formId = replyForm.id.replace('reply-form-', '');
-                        const replyLink = document.querySelector(`[data-comment-id="${formId}"].reply-link`);
-                        if (replyLink) {
-                            replyLink.textContent = 'reply';
-                        }
-                    }
-                    
-                    // Clear the form
-                    this.querySelector('textarea').value = '';
-                    
-                    // Show success message briefly
-                    const successMsg = document.createElement('div');
-                    successMsg.style.cssText = 'background: #28a745; color: white; padding: 8px; border-radius: 4px; margin: 10px 0; text-align: center;';
-                    successMsg.textContent = 'Reply posted successfully!';
-                    
-                    if (replyForm) {
-                        replyForm.parentNode.insertBefore(successMsg, replyForm.nextSibling);
-                        setTimeout(() => {
-                            successMsg.remove();
-                            // Optionally refresh page to show new comment
-                            window.location.reload();
-                        }, 1500);
-                    }
-                } else {
-                    alert(data.error || 'Failed to post comment');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Failed to post comment');
-            })
-            .finally(() => {
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
-                this.dataset.submitting = 'false';
-            });
-        });
-    });
+    // Temporarily disable page-specific comment handlers - relying on global application.js
+    console.log('PAGE JAVASCRIPT LOADED - Comment handling delegated to application.js');
 
     // Reply link functionality - simplified and more robust
     function setupReplyFunctionality() {
@@ -411,5 +336,29 @@ document.addEventListener('DOMContentLoaded', function() {
     height: auto !important;
     max-height: none !important;
     overflow: visible !important;
+}
+
+.mod-separator {
+    color: #666;
+    margin: 0 0.3em;
+}
+
+.mod-link {
+    color: #ff4444;
+    text-decoration: none;
+    font-size: 0.9em;
+    margin: 0 0.2em;
+}
+
+.mod-link:hover {
+    text-decoration: underline;
+}
+
+.mod-delete {
+    color: #dc3545;
+}
+
+.mod-undelete {
+    color: #28a745;
 }
 </style>

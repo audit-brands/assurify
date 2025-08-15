@@ -32,8 +32,10 @@ class HomeController extends BaseController
         try {
             // Get user and filtered tags
             $user = null;
+            $isModerator = false;
             if (isset($_SESSION['user_id'])) {
                 $user = \App\Models\User::find($_SESSION['user_id']);
+                $isModerator = $user && ($user->is_admin || $user->is_moderator);
             }
             $excludeTagIds = $this->getFilteredTagIds($user);
             
@@ -73,7 +75,8 @@ class HomeController extends BaseController
             'section_header' => $sectionHeader,
             'stories' => $stories,
             'success' => $success,
-            'pagination' => $pagination
+            'pagination' => $pagination,
+            'is_moderator' => $isModerator
         ]);
     }
 

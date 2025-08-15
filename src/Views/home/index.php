@@ -35,6 +35,15 @@
                         by <a href="/u/<?=$story['username']?>"><?=$story['username']?></a>
                         <?=$story['time_ago']?>
                         | <a href="/s/<?=$story['short_id']?>/<?=$story['slug']?>"><?=$story['comments_count']?> comments</a>
+                        
+                        <?php if ($is_moderator ?? false) : ?>
+                            | <a href="/mod/stories/<?=$story['short_id']?>/edit" class="mod-link">edit</a>
+                            <?php if ($story['is_deleted'] ?? false) : ?>
+                                | <a href="/mod/stories/<?=$story['short_id']?>/undelete" class="mod-link mod-undelete">undelete</a>
+                            <?php else : ?>
+                                | <a href="/mod/stories/<?=$story['short_id']?>/delete" class="mod-link mod-delete">delete</a>
+                            <?php endif ?>
+                        <?php endif ?>
                     </div>
                 </div>
             </div>

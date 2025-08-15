@@ -53,7 +53,7 @@
     
     <h2>Transparency and Moderation</h2>
     
-    <p>Community moderation is transparent and accountable. All moderation actions are logged and visible on the <a href="/moderation-log">Moderation Log</a>. This ensures that moderation decisions are fair and consistent with community guidelines.</p>
+    <p>Community moderation is transparent and accountable. All moderation actions are logged and visible on the <a href="/moderations">Moderation Log</a>. This ensures that moderation decisions are fair and consistent with community guidelines.</p>
     
     <p>Moderators and administrators are community volunteers who help maintain the quality of discussions and ensure adherence to community guidelines.</p>
     
