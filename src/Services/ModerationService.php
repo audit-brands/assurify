@@ -249,10 +249,16 @@ class ModerationService
         }
     }
 
-    public function getModerationLog(int $limit = 50): array
+    public function getModerationLog(int $page = 1, int $perPage = 50): array
     {
         // For now, return empty array - in real implementation would query moderation_log table
         return [];
+    }
+
+    public function getTotalModerationCount(): int
+    {
+        // Placeholder - return 0 for now until moderation_log table is created
+        return 0;
     }
 
     private function logModerationAction(string $type, int $itemId, string $action, int $moderatorId, ?string $reason = null): void

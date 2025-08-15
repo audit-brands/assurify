@@ -110,6 +110,279 @@ class AdminController extends BaseController
         ]);
     }
 
+    public function tags(Request $request, Response $response): Response
+    {
+        if (!$this->requireAdmin()) {
+            return $this->render($response, 'errors/forbidden', [
+                'title' => 'Access Denied | Assurify'
+            ])->withStatus(403);
+        }
+
+        // Get all tags ordered by tag name
+        $tags = \App\Models\Tag::orderBy('tag')->get();
+
+        return $this->render($response, 'admin/tags', [
+            'title' => 'Tag Management | Assurify',
+            'tags' => $tags
+        ]);
+    }
+
+    public function categories(Request $request, Response $response): Response
+    {
+        if (!$this->requireAdmin()) {
+            return $this->render($response, 'errors/forbidden', [
+                'title' => 'Access Denied | Assurify'
+            ])->withStatus(403);
+        }
+
+        // Get all categories with their tags
+        $categories = \App\Models\TagCategory::with(['activeTags'])->active()->ordered()->get();
+        
+        // Get uncategorized tags
+        $uncategorizedTags = \App\Models\Tag::whereNull('category_id')
+                                           ->where('inactive', false)
+                                           ->orderBy('tag')
+                                           ->get();
+
+        $categoriesData = $categories->map(function ($category) {
+            return [
+                'id' => $category->id,
+                'name' => $category->name,
+                'description' => $category->description,
+                'sort_order' => $category->sort_order,
+                'tags' => $category->activeTags->sortBy('tag')->map(function ($tag) {
+                    return [
+                        'id' => $tag->id,
+                        'tag' => $tag->tag,
+                        'description' => $tag->description
+                    ];
+                })->values()->toArray()
+            ];
+        })->toArray();
+
+        $uncategorizedData = $uncategorizedTags->map(function ($tag) {
+            return [
+                'id' => $tag->id,
+                'tag' => $tag->tag,
+                'description' => $tag->description
+            ];
+        })->toArray();
+
+        return $this->render($response, 'admin/categories', [
+            'title' => 'Tag Categories | Assurify',
+            'categories' => $categoriesData,
+            'uncategorized_tags' => $uncategorizedData
+        ]);
+    }
+
+    public function addCategory(Request $request, Response $response): Response
+    {
+        if (!$this->requireAdmin()) {
+            return $this->json($response, ['error' => 'Access denied'], 403);
+        }
+
+        $data = $request->getParsedBody();
+        $name = trim($data['name'] ?? '');
+        $description = trim($data['description'] ?? '');
+
+        if (empty($name)) {
+            return $this->json($response, ['error' => 'Category name is required'], 400);
+        }
+
+        try {
+            // Check if category already exists
+            $existing = \App\Models\TagCategory::where('name', $name)->first();
+            if ($existing) {
+                return $this->json($response, ['error' => 'Category already exists'], 400);
+            }
+
+            // Get next sort order
+            $maxOrder = \App\Models\TagCategory::max('sort_order') ?? 0;
+
+            $category = \App\Models\TagCategory::create([
+                'name' => $name,
+                'description' => $description ?: null,
+                'sort_order' => $maxOrder + 1,
+                'is_active' => true
+            ]);
+
+            return $this->json($response, [
+                'success' => true,
+                'message' => 'Category added successfully',
+                'category_id' => $category->id
+            ]);
+        } catch (\Exception $e) {
+            return $this->json($response, [
+                'error' => 'Failed to add category: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updateCategory(Request $request, Response $response, array $args): Response
+    {
+        if (!$this->requireAdmin()) {
+            return $this->json($response, ['error' => 'Access denied'], 403);
+        }
+
+        $categoryId = $args['id'] ?? null;
+        $data = $request->getParsedBody();
+        $name = trim($data['name'] ?? '');
+        $description = trim($data['description'] ?? '');
+
+        if (!$categoryId || empty($name)) {
+            return $this->json($response, ['error' => 'Category ID and name are required'], 400);
+        }
+
+        try {
+            $category = \App\Models\TagCategory::findOrFail($categoryId);
+            
+            // Check if another category has this name
+            $existing = \App\Models\TagCategory::where('name', $name)
+                                              ->where('id', '!=', $categoryId)
+                                              ->first();
+            if ($existing) {
+                return $this->json($response, ['error' => 'Category name already exists'], 400);
+            }
+
+            $category->update([
+                'name' => $name,
+                'description' => $description ?: null
+            ]);
+
+            return $this->json($response, [
+                'success' => true,
+                'message' => 'Category updated successfully'
+            ]);
+        } catch (\Exception $e) {
+            return $this->json($response, [
+                'error' => 'Failed to update category: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function deleteCategory(Request $request, Response $response, array $args): Response
+    {
+        if (!$this->requireAdmin()) {
+            return $this->json($response, ['error' => 'Access denied'], 403);
+        }
+
+        $categoryId = $args['id'] ?? null;
+
+        if (!$categoryId) {
+            return $this->json($response, ['error' => 'Category ID is required'], 400);
+        }
+
+        try {
+            $category = \App\Models\TagCategory::findOrFail($categoryId);
+            
+            // Move all tags in this category to uncategorized
+            \App\Models\Tag::where('category_id', $categoryId)->update(['category_id' => null]);
+            
+            // Delete the category
+            $category->delete();
+
+            return $this->json($response, [
+                'success' => true,
+                'message' => 'Category deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return $this->json($response, [
+                'error' => 'Failed to delete category: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function assignTagToCategory(Request $request, Response $response): Response
+    {
+        if (!$this->requireAdmin()) {
+            return $this->json($response, ['error' => 'Access denied'], 403);
+        }
+
+        $data = $request->getParsedBody();
+        $tagId = $data['tag_id'] ?? null;
+        $categoryId = $data['category_id'] ?? null;
+
+        if (!$tagId || !$categoryId) {
+            return $this->json($response, ['error' => 'Tag ID and Category ID are required'], 400);
+        }
+
+        try {
+            $tag = \App\Models\Tag::findOrFail($tagId);
+            $category = \App\Models\TagCategory::findOrFail($categoryId);
+            
+            $tag->update(['category_id' => $categoryId]);
+
+            return $this->json($response, [
+                'success' => true,
+                'message' => 'Tag assigned to category successfully'
+            ]);
+        } catch (\Exception $e) {
+            return $this->json($response, [
+                'error' => 'Failed to assign tag: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function removeTagFromCategory(Request $request, Response $response): Response
+    {
+        if (!$this->requireAdmin()) {
+            return $this->json($response, ['error' => 'Access denied'], 403);
+        }
+
+        $data = $request->getParsedBody();
+        $tagId = $data['tag_id'] ?? null;
+
+        if (!$tagId) {
+            return $this->json($response, ['error' => 'Tag ID is required'], 400);
+        }
+
+        try {
+            $tag = \App\Models\Tag::findOrFail($tagId);
+            $currentCategory = $tag->category;
+            
+            // If tag is already in "Other" category, move it to a different default category
+            if ($currentCategory && $currentCategory->name === 'Other') {
+                // Find the first non-Other category to move it to
+                $defaultCategory = \App\Models\TagCategory::where('name', '!=', 'Other')
+                                                         ->active()
+                                                         ->ordered()
+                                                         ->first();
+                
+                if ($defaultCategory) {
+                    $tag->update(['category_id' => $defaultCategory->id]);
+                    return $this->json($response, [
+                        'success' => true,
+                        'message' => "Tag moved to {$defaultCategory->name} category"
+                    ]);
+                } else {
+                    return $this->json($response, [
+                        'error' => 'No other categories available to move tag to'
+                    ], 400);
+                }
+            } else {
+                // For non-Other categories, move to "Other" category
+                $otherCategory = \App\Models\TagCategory::firstOrCreate(
+                    ['name' => 'Other'],
+                    [
+                        'description' => 'Uncategorized tags',
+                        'sort_order' => 999,
+                        'is_active' => true
+                    ]
+                );
+                
+                $tag->update(['category_id' => $otherCategory->id]);
+                return $this->json($response, [
+                    'success' => true,
+                    'message' => 'Tag moved to Other category'
+                ]);
+            }
+        } catch (\Exception $e) {
+            return $this->json($response, [
+                'error' => 'Failed to remove tag: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function logs(Request $request, Response $response): Response
     {
         if (!$this->requireAdmin()) {

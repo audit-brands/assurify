@@ -75,8 +75,13 @@
             <?=$this->section('content')?>
         </main>
 
-        <footer id="footer">
-            <p>Made with Love by <a href="https://auditbrands" target="_blank" rel="noopener">AuditBrands</a>. All Rights Reserved.</p>
+        <footer>
+            <nav>
+                <a href="/about">About</a>
+                <a href="/tags">Tags</a>
+                <a href="/filter">Filter</a>
+                <a href="/moderation-log">Moderation Log</a>
+            </nav>
         </footer>
     </div>
 

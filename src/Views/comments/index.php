@@ -14,9 +14,9 @@
                     <div class="voters">
                         <label for="comment_folder_<?=$comment['short_id']?>" class="comment_folder"></label>
                         <?php if (isset($_SESSION['user_id']) && $_SESSION['user_id'] != $comment['user_id']) : ?>
-                            <a href="#" class="upvoter" data-comment-id="<?=$comment['id']?>" data-vote="1" title="Upvote"><?=$comment['score']?></a>
+                            <div class="upvoter" data-comment-id="<?=$comment['id']?>" data-vote="1" title="Upvote"><?=$comment['score']?></div>
                         <?php else : ?>
-                            <span class="upvoter"><?=$comment['score']?></span>
+                            <div class="upvoter"><?=$comment['score']?></div>
                         <?php endif ?>
                     </div>
                     
@@ -61,20 +61,20 @@
     <?php endif ?>
 </ol>
 
-<?php if (!empty($comments)) : ?>
-<div class="morelink">
-    <?php if ($page > 1) : ?>
-        <a href="?page=<?=$page - 1?>">&lt;&lt; Page <?=$page - 1?></a>
-    <?php endif ?>
-    
-    <?php if ($page > 1 && $hasMore) : ?>
-        |
-    <?php endif ?>
-    
-    <?php if ($hasMore) : ?>
-        <a href="?page=<?=$page + 1?>">Page <?=$page + 1?> &gt;&gt;</a>
-    <?php endif ?>
-</div>
+<?php if (isset($pagination) && $pagination['total_pages'] > 1): ?>
+    <div class="pagination">
+        <?php if ($pagination['has_prev']): ?>
+            <a href="<?= $pagination['base_url'] ?>?page=<?= $pagination['current_page'] - 1 ?>">&lt;&lt; Page <?= $pagination['current_page'] - 1 ?></a>
+        <?php endif ?>
+        
+        <?php if ($pagination['has_prev'] && $pagination['has_next']): ?>
+             | 
+        <?php endif ?>
+        
+        <?php if ($pagination['has_next']): ?>
+            <a href="<?= $pagination['base_url'] ?>?page=<?= $pagination['current_page'] + 1 ?>">Page <?= $pagination['current_page'] + 1 ?> &gt;&gt;</a>
+        <?php endif ?>
+    </div>
 <?php endif ?>
 
 <script>
@@ -90,10 +90,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Comment voting functionality
     document.querySelectorAll('.upvoter[data-comment-id]').forEach(button => {
+        // Make sure it's clickable
+        button.style.cursor = 'pointer';
+        
         button.addEventListener('click', function(e) {
             e.preventDefault();
+            e.stopPropagation();
+            
             const commentId = this.dataset.commentId;
             const vote = parseInt(this.dataset.vote);
+            
+            console.log('Voting on comment:', commentId, 'with vote:', vote);
             
             fetch(`/comments/${commentId}/vote`, {
                 method: 'POST',
@@ -104,6 +111,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => response.json())
             .then(data => {
+                console.log('Vote response:', data);
                 if (data.success) {
                     // Update score display
                     this.textContent = data.score;
@@ -112,8 +120,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     const votingDiv = this.parentElement;
                     if (data.voted) {
                         votingDiv.classList.add('upvoted');
+                        this.classList.add('voted');
                     } else {
                         votingDiv.classList.remove('upvoted');
+                        this.classList.remove('voted');
                     }
                 } else {
                     alert(data.error || 'Failed to vote');

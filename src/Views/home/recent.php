@@ -8,33 +8,24 @@
     <?php else : ?>
         <?php foreach ($stories as $story) : ?>
             <div class="story">
-                <div class="story-voting">
-                    <?php if (isset($_SESSION['user_id'])) : ?>
-                        <button class="upvoter" data-story-id="<?=$story['id']?>" data-vote="1" title="Upvote"></button>
-                        <span class="vote-score"><?=$story['score']?></span>
-                    <?php else : ?>
-                        <span class="upvoter-guest" title="Login to vote"></span>
-                        <span class="vote-score-guest"><?=$story['score']?></span>
-                    <?php endif ?>
-                </div>
                 <div class="story-content">
-                    <div class="story-title">
-                        <h2>
-                            <a href="<?=$story['url']?>"><?=$this->e($story['title'])?></a>
-                            <?php if (!empty($story['tags'])) : ?>
-                                <span class="story-tags">
-                                    <?php foreach ($story['tags'] as $tag) : ?>
-                                        <a href="/t/<?=$tag?>" class="tag"><?=$tag?></a>
-                                    <?php endforeach ?>
-                                </span>
-                            <?php endif ?>
-                        </h2>
-                        <div class="story-domain">
-                            <a href="/s/<?=$story['short_id']?>/<?=$story['slug']?>">(<?=$story['domain']?>)</a>
-                        </div>
+                    <div class="title-line">
+                        <?php if (isset($_SESSION['user_id'])) : ?>
+                            <button class="upvoter" data-story-id="<?=$story['id']?>" data-vote="1" title="Upvote">[<?=$story['score']?>]</button>
+                        <?php else : ?>
+                            <span class="upvoter-guest" title="Login to vote">[<?=$story['score']?>]</span>
+                        <?php endif ?>
+                        <a href="<?=$story['url']?>" class="story-title"><?=$this->e($story['title'])?></a>
+                        <?php if (!empty($story['tags'])) : ?>
+                            <span class="story-tags">
+                                <?php foreach ($story['tags'] as $tag) : ?>
+                                    <a href="/t/<?=$tag?>" class="tag"><?=$tag?></a>
+                                <?php endforeach ?>
+                            </span>
+                        <?php endif ?>
+                        <span class="story-domain"><a href="/s/<?=$story['short_id']?>/<?=$story['slug']?>"><?=$story['domain']?></a></span>
                     </div>
-                    <div class="story-details">
-                        <span class="story-points"><?=$story['score']?> points</span>
+                    <div class="byline">
                         by <a href="/u/<?=$story['username']?>"><?=$story['username']?></a>
                         <?=$story['time_ago']?>
                         | <a href="/s/<?=$story['short_id']?>/<?=$story['slug']?>"><?=$story['comments_count']?> comments</a>
@@ -42,6 +33,22 @@
                 </div>
             </div>
         <?php endforeach ?>
+    <?php endif ?>
+    
+    <?php if (isset($pagination) && $pagination['total_pages'] > 1): ?>
+        <div class="pagination">
+            <?php if ($pagination['has_prev']): ?>
+                <a href="<?= $pagination['base_url'] ?>?page=<?= $pagination['current_page'] - 1 ?>">&lt;&lt; Page <?= $pagination['current_page'] - 1 ?></a>
+            <?php endif ?>
+            
+            <?php if ($pagination['has_prev'] && $pagination['has_next']): ?>
+                 | 
+            <?php endif ?>
+            
+            <?php if ($pagination['has_next']): ?>
+                <a href="<?= $pagination['base_url'] ?>?page=<?= $pagination['current_page'] + 1 ?>">Page <?= $pagination['current_page'] + 1 ?> &gt;&gt;</a>
+            <?php endif ?>
+        </div>
     <?php endif ?>
 </div>
 

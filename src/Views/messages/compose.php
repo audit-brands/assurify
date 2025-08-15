@@ -115,6 +115,57 @@
 </div>
 
 <style>
+.messages-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.messages-header {
+    margin-bottom: 30px;
+    border-bottom: 1px solid var(--color-fg-contrast-4-5);
+    padding-bottom: 20px;
+}
+
+.messages-header h1 {
+    margin: 0 0 15px 0;
+    font-size: 2em;
+    color: var(--color-fg);
+}
+
+.messages-nav {
+    display: flex;
+    gap: 20px;
+}
+
+.messages-nav .nav-link {
+    padding: 8px 16px;
+    text-decoration: none;
+    color: var(--color-fg-contrast-10);
+    border-radius: 4px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.messages-nav .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--color-fg);
+}
+
+.messages-nav .nav-link.active {
+    background-color: var(--color-accent);
+    color: white;
+}
+
+.messages-nav .compose-link {
+    background-color: var(--color-accent);
+    color: white;
+}
+
+.messages-nav .compose-link:hover {
+    background-color: var(--color-accent-hover);
+}
+
 .compose-form-container {
     max-width: 700px;
     margin: 0 auto;
@@ -126,7 +177,7 @@
 
 .compose-form {
     background-color: var(--color-bg);
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-fg-contrast-4-5);
     border-radius: 6px;
     padding: 24px;
 }
@@ -146,7 +197,7 @@
 .form-input {
     width: 100%;
     padding: 10px 12px;
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-fg-contrast-4-5);
     border-radius: 4px;
     font-size: 1em;
     background-color: var(--color-bg);
@@ -163,7 +214,7 @@
 .form-textarea {
     width: 100%;
     padding: 12px;
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-fg-contrast-4-5);
     border-radius: 4px;
     font-size: 1em;
     font-family: inherit;
@@ -182,7 +233,7 @@
 
 .form-hint {
     font-size: 0.85em;
-    color: var(--color-fg-contrast-5);
+    color: var(--color-fg-contrast-7-5);
     margin-top: 4px;
 }
 
@@ -192,7 +243,7 @@
     left: 0;
     right: 0;
     background-color: var(--color-bg);
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-fg-contrast-4-5);
     border-top: none;
     border-radius: 0 0 4px 4px;
     max-height: 200px;
@@ -213,7 +264,7 @@
 }
 
 .suggestion-item:hover {
-    background-color: var(--color-bg-contrast-2);
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
 .recipient-info {
@@ -222,7 +273,7 @@
 
 .recipient-status {
     font-size: 0.9em;
-    color: var(--color-success);
+    color: var(--color-accent);
 }
 
 .form-actions {
@@ -250,23 +301,23 @@
 }
 
 .btn-primary:hover {
-    background-color: var(--color-accent-dark);
+    background-color: var(--color-accent-hover);
 }
 
 .btn-secondary {
     background-color: transparent;
-    color: var(--color-fg-contrast-4);
-    border: 1px solid var(--color-border);
+    color: var(--color-fg-contrast-10);
+    border: 1px solid var(--color-fg-contrast-4-5);
 }
 
 .btn-secondary:hover {
-    background-color: var(--color-bg-contrast-2);
+    background-color: rgba(255, 255, 255, 0.05);
     color: var(--color-fg);
 }
 
 .compose-help {
-    background-color: var(--color-bg-contrast-1);
-    border: 1px solid var(--color-border);
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--color-fg-contrast-4-5);
     border-radius: 6px;
     padding: 20px;
     font-size: 0.9em;
@@ -285,12 +336,12 @@
 
 .compose-help li {
     margin-bottom: 8px;
-    color: var(--color-fg-contrast-4);
+    color: var(--color-fg-contrast-10);
     line-height: 1.5;
 }
 
 .markdown-help-link {
-    color: var(--color-link);
+    color: var(--color-fg-link);
     text-decoration: none;
 }
 
@@ -313,7 +364,7 @@
 
 .modal-content {
     background-color: var(--color-bg);
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-fg-contrast-4-5);
     border-radius: 6px;
     max-width: 500px;
     width: 90%;
@@ -339,7 +390,7 @@
     border: none;
     font-size: 1.5em;
     cursor: pointer;
-    color: var(--color-fg-contrast-4);
+    color: var(--color-fg-contrast-10);
     padding: 0;
     width: 30px;
     height: 30px;
@@ -373,7 +424,7 @@
 }
 
 .markdown-examples code {
-    background-color: var(--color-bg-contrast-2);
+    background-color: rgba(255, 255, 255, 0.05);
     padding: 2px 6px;
     border-radius: 3px;
     font-family: 'Courier New', monospace;
@@ -483,7 +534,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } else {
             hint.innerHTML = 'Markdown formatting supported. Messages are limited to 65,535 characters.';
-            hint.style.color = 'var(--color-fg-contrast-5)';
+            hint.style.color = 'var(--color-fg-contrast-7-5)';
         }
     }
 

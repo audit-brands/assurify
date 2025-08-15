@@ -26,11 +26,21 @@ class TagService
                 return $existingTag;
             }
 
+            // Find or create "Other" category for new tags
+            $otherCategory = \App\Models\TagCategory::firstOrCreate(
+                ['name' => 'Other'],
+                [
+                    'description' => 'Uncategorized tags',
+                    'sort_order' => 999,
+                    'is_active' => true
+                ]
+            );
+
             $tag = new Tag();
             $tag->tag = $tagName;
             $tag->description = $description;
             $tag->privileged = $privileged;
-            $tag->category_id = 4; // Default to "General" category
+            $tag->category_id = $otherCategory->id; // Default new tags to "Other" category
             $tag->token = bin2hex(random_bytes(16)); // Generate a random token
             $tag->save();
 
@@ -139,6 +149,7 @@ class TagService
                     'id' => $tag->id,
                     'tag' => $tag->tag,
                     'description' => $tag->description,
+                    'category_id' => $tag->category_id,
                     'privileged' => $tag->privileged,
                     'is_media' => $tag->is_media,
                     'inactive' => $tag->inactive,

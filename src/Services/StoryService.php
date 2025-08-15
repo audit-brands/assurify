@@ -128,12 +128,19 @@ class StoryService
         }
     }
 
-    public function getStoriesForListing(string $sort = 'hot', int $limit = 25, int $offset = 0): array
+    public function getStoriesForListing(string $sort = 'hot', int $limit = 25, int $offset = 0, array $excludeTagIds = []): array
     {
         try {
             $query = Story::where('is_deleted', false)
                          ->where('is_moderated', false)
                          ->with(['user', 'tags']);
+            
+            // Exclude stories with filtered tags
+            if (!empty($excludeTagIds)) {
+                $query->whereDoesntHave('tags', function($tagQuery) use ($excludeTagIds) {
+                    $tagQuery->whereIn('tag_id', $excludeTagIds);
+                });
+            }
 
             switch ($sort) {
                 case 'newest':
@@ -184,17 +191,24 @@ class StoryService
         return $this->getStoriesForListing('hot', $limit);
     }
 
-    public function getStories(int $limit = 25, int $offset = 0, string $sort = 'hot'): array
+    public function getStories(int $limit = 25, int $offset = 0, string $sort = 'hot', array $excludeTagIds = []): array
     {
-        return $this->getStoriesForListing($sort, $limit, $offset);
+        return $this->getStoriesForListing($sort, $limit, $offset, $excludeTagIds);
     }
 
-    public function getTotalStories(): int
+    public function getTotalStories(array $excludeTagIds = []): int
     {
         try {
-            return Story::where('is_deleted', false)
-                       ->where('is_moderated', false)
-                       ->count();
+            $query = Story::where('is_deleted', false)
+                         ->where('is_moderated', false);
+            
+            if (!empty($excludeTagIds)) {
+                $query->whereDoesntHave('tags', function($tagQuery) use ($excludeTagIds) {
+                    $tagQuery->whereIn('tag_id', $excludeTagIds);
+                });
+            }
+            
+            return $query->count();
         } catch (\Exception $e) {
             return 0;
         }

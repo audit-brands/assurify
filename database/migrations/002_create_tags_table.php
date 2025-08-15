@@ -9,6 +9,7 @@ return [
             $table->id();
             $table->string('tag', 25)->unique();
             $table->string('description', 100)->nullable();
+            $table->unsignedBigInteger('category_id')->nullable();
             $table->boolean('privileged')->default(false);
             $table->boolean('is_media')->default(false);
             $table->boolean('inactive')->default(false);
@@ -17,6 +18,8 @@ return [
             
             $table->index(['tag']);
             $table->index(['inactive']);
+            $table->index(['category_id']);
+            $table->foreign('category_id')->references('id')->on('tag_categories')->onDelete('set null');
         });
     },
     'down' => function () {

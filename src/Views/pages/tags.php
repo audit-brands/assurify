@@ -5,6 +5,14 @@
     
     <p>You can <a href="/filter">filter out stories by tag</a>, even if you don't have an account.</p>
     
+    <?php if ($can_edit): ?>
+        <div class="admin-tools">
+            <p><strong>Admin Tools:</strong> 
+                <a href="/admin/categories">Manage Tag Categories</a>
+            </p>
+        </div>
+    <?php endif ?>
+    
     <?php if (!empty($popular_tags)): ?>
         <h2>Most Popular</h2>
         <div class="popular-tags">
@@ -145,6 +153,25 @@
 
 .cancel-description:hover {
     background: #444;
+}
+
+.admin-tools {
+    border: 1px solid #ccc;
+    padding: 0.75em;
+    margin: 1em 0;
+}
+
+.admin-tools p {
+    margin: 0;
+}
+
+.admin-tools a {
+    color: #ff4444;
+    text-decoration: none;
+}
+
+.admin-tools a:hover {
+    text-decoration: underline;
 }
 </style>
 

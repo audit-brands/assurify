@@ -137,6 +137,14 @@ $app->group('/admin', function (RouteCollectorProxy $group) {
     $group->get('/settings', [AdminController::class, 'settings']);
     $group->get('/logs', [AdminController::class, 'logs']);
     
+    // Category management
+    $group->get('/categories', [AdminController::class, 'categories']);
+    $group->post('/categories/add', [AdminController::class, 'addCategory']);
+    $group->post('/categories/{id}/update', [AdminController::class, 'updateCategory']);
+    $group->post('/categories/{id}/delete', [AdminController::class, 'deleteCategory']);
+    $group->post('/tags/assign-category', [AdminController::class, 'assignTagToCategory']);
+    $group->post('/tags/remove-category', [AdminController::class, 'removeTagFromCategory']);
+    
     // Admin API endpoints
     $group->post('/flush-cache', [AdminController::class, 'flushCache']);
     $group->post('/cleanup', [AdminController::class, 'cleanupSystem']);

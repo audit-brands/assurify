@@ -104,13 +104,54 @@ class PageController extends BaseController
     
     private function groupTagsByCategory(array $tags): array
     {
+        try {
+            // Get categories from database
+            $categories = \App\Models\TagCategory::with(['activeTags'])->active()->ordered()->get();
+            
+            $categorized = [];
+            $uncategorized = [];
+            
+            // Group database tags by their assigned categories
+            foreach ($categories as $category) {
+                $categoryTags = [];
+                foreach ($tags as $tag) {
+                    if (isset($tag['category_id']) && $tag['category_id'] == $category->id) {
+                        $categoryTags[] = $tag;
+                    }
+                }
+                if (!empty($categoryTags)) {
+                    $categorized[$category->name] = $categoryTags;
+                }
+            }
+            
+            // Find uncategorized tags
+            foreach ($tags as $tag) {
+                if (empty($tag['category_id'])) {
+                    $uncategorized[] = $tag;
+                }
+            }
+            
+            // Add uncategorized section if there are any
+            if (!empty($uncategorized)) {
+                $categorized['Other'] = $uncategorized;
+            }
+            
+            return $categorized;
+            
+        } catch (\Exception $e) {
+            // Fallback to hardcoded categories if database fails
+            error_log("Database error in groupTagsByCategory: " . $e->getMessage());
+            return $this->fallbackGroupTagsByCategory($tags);
+        }
+    }
+    
+    private function fallbackGroupTagsByCategory(array $tags): array
+    {
+        // Fallback hardcoded categories
         $categories = [
-            'Programming Languages' => ['javascript', 'python', 'php', 'java', 'go', 'rust', 'c', 'cpp', 'nodejs', 'react', 'vue', 'angular'],
             'Security' => ['security', 'privacy', 'encryption', 'vulnerability', 'malware', 'audit', 'penetration', 'firewall'],
-            'Infrastructure' => ['devops', 'docker', 'kubernetes', 'aws', 'azure', 'gcp', 'linux', 'unix', 'windows', 'cloud'],
-            'Data & AI' => ['data', 'database', 'analytics', 'ml', 'ai', 'blockchain', 'api', 'bigdata', 'nosql', 'sql'],
             'Business' => ['business', 'startup', 'management', 'compliance', 'risk', 'finance', 'enterprise'],
-            'Content Types' => ['video', 'pdf', 'slides', 'audio', 'book', 'research', 'tutorial', 'news']
+            'Technology' => ['tech', 'software', 'hardware', 'development', 'programming']
         ];
         
         $categorized = [];

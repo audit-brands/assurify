@@ -135,9 +135,60 @@
 </div>
 
 <style>
+.messages-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.messages-header {
+    margin-bottom: 30px;
+    border-bottom: 1px solid var(--color-fg-contrast-4-5);
+    padding-bottom: 20px;
+}
+
+.messages-header h1 {
+    margin: 0 0 15px 0;
+    font-size: 2em;
+    color: var(--color-fg);
+}
+
+.messages-nav {
+    display: flex;
+    gap: 20px;
+}
+
+.messages-nav .nav-link {
+    padding: 8px 16px;
+    text-decoration: none;
+    color: var(--color-fg-contrast-10);
+    border-radius: 4px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.messages-nav .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--color-fg);
+}
+
+.messages-nav .nav-link.active {
+    background-color: var(--color-accent);
+    color: white;
+}
+
+.messages-nav .compose-link {
+    background-color: var(--color-accent);
+    color: white;
+}
+
+.messages-nav .compose-link:hover {
+    background-color: var(--color-accent-hover);
+}
+
 .search-form-container {
-    background-color: var(--color-bg-contrast-1);
-    border: 1px solid var(--color-border);
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--color-fg-contrast-4-5);
     border-radius: 6px;
     padding: 20px;
     margin-bottom: 30px;
@@ -157,7 +208,7 @@
 .search-input {
     flex-grow: 1;
     padding: 12px 16px;
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-fg-contrast-4-5);
     border-radius: 4px;
     font-size: 1em;
     background-color: var(--color-bg);
@@ -184,12 +235,12 @@
 }
 
 .search-button:hover {
-    background-color: var(--color-accent-dark);
+    background-color: var(--color-accent-hover);
 }
 
 .search-hint {
     font-size: 0.9em;
-    color: var(--color-fg-contrast-5);
+    color: var(--color-fg-contrast-7-5);
     text-align: center;
 }
 
@@ -203,7 +254,7 @@
     align-items: center;
     margin-bottom: 20px;
     padding-bottom: 15px;
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-fg-contrast-4-5);
 }
 
 .results-header h2 {
@@ -214,14 +265,14 @@
 
 .results-count {
     font-size: 0.9em;
-    color: var(--color-fg-contrast-4);
+    color: var(--color-fg-contrast-10);
     font-weight: 500;
 }
 
 .no-results {
     text-align: center;
     padding: 40px 20px;
-    color: var(--color-fg-contrast-4);
+    color: var(--color-fg-contrast-10);
 }
 
 .no-results p {
@@ -233,8 +284,8 @@
     max-width: 400px;
     margin: 0 auto;
     text-align: left;
-    background-color: var(--color-bg-contrast-1);
-    border: 1px solid var(--color-border);
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--color-fg-contrast-4-5);
     border-radius: 4px;
     padding: 20px;
 }
@@ -252,7 +303,7 @@
 
 .search-suggestions li {
     margin-bottom: 6px;
-    color: var(--color-fg-contrast-4);
+    color: var(--color-fg-contrast-10);
     line-height: 1.4;
 }
 
@@ -260,7 +311,7 @@
     max-width: 600px;
     margin: 40px auto;
     text-align: center;
-    color: var(--color-fg-contrast-4);
+    color: var(--color-fg-contrast-10);
 }
 
 .search-help h3 {
@@ -276,8 +327,8 @@
 }
 
 .search-tips {
-    background-color: var(--color-bg-contrast-1);
-    border: 1px solid var(--color-border);
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--color-fg-contrast-4-5);
     border-radius: 4px;
     padding: 20px;
     text-align: left;
@@ -297,7 +348,7 @@
 .search-tips li {
     margin-bottom: 10px;
     line-height: 1.5;
-    color: var(--color-fg-contrast-4);
+    color: var(--color-fg-contrast-10);
 }
 
 .search-tips strong {
@@ -316,14 +367,14 @@
 /* Reuse existing message list styles */
 .messages-list {
     background-color: var(--color-bg);
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-fg-contrast-4-5);
     border-radius: 6px;
     overflow: hidden;
 }
 
 .message-item {
     padding: 16px;
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-fg-contrast-4-5);
     display: flex;
     align-items: flex-start;
     gap: 16px;
@@ -335,7 +386,7 @@
 }
 
 .message-item:hover {
-    background-color: var(--color-bg-contrast-1);
+    background-color: rgba(255, 255, 255, 0.02);
 }
 
 .message-item.unread {
@@ -353,13 +404,13 @@
 
 .participant-label {
     font-size: 0.85em;
-    color: var(--color-fg-contrast-5);
+    color: var(--color-fg-contrast-7-5);
     font-weight: 500;
 }
 
 .participant-link {
     text-decoration: none;
-    color: var(--color-link);
+    color: var(--color-fg-link);
     font-weight: 600;
 }
 
@@ -390,7 +441,7 @@
 }
 
 .message-subject a:hover {
-    color: var(--color-link);
+    color: var(--color-fg-link);
 }
 
 .message-item.unread .message-subject a {
@@ -399,7 +450,7 @@
 
 .message-preview {
     font-size: 0.9em;
-    color: var(--color-fg-contrast-4);
+    color: var(--color-fg-contrast-10);
     line-height: 1.4;
 }
 
@@ -408,7 +459,7 @@
     text-align: right;
     min-width: 140px;
     font-size: 0.85em;
-    color: var(--color-fg-contrast-5);
+    color: var(--color-fg-contrast-7-5);
 }
 
 .message-time {
@@ -419,7 +470,7 @@
 .reply-count {
     display: block;
     margin-bottom: 8px;
-    color: var(--color-fg-contrast-4);
+    color: var(--color-fg-contrast-10);
 }
 
 .message-actions {
@@ -430,7 +481,7 @@
 
 .action-link {
     text-decoration: none;
-    color: var(--color-link);
+    color: var(--color-fg-link);
     font-size: 0.85em;
 }
 
@@ -444,26 +495,26 @@
     align-items: center;
     margin-top: 20px;
     padding: 16px 0;
-    border-top: 1px solid var(--color-border);
+    border-top: 1px solid var(--color-fg-contrast-4-5);
 }
 
 .pagination-link {
     text-decoration: none;
-    color: var(--color-link);
+    color: var(--color-fg-link);
     padding: 8px 12px;
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-fg-contrast-4-5);
     border-radius: 4px;
     font-size: 0.9em;
 }
 
 .pagination-link:hover {
-    background-color: var(--color-bg-contrast-2);
+    background-color: rgba(255, 255, 255, 0.05);
     text-decoration: none;
 }
 
 .pagination-info {
     font-size: 0.9em;
-    color: var(--color-fg-contrast-4);
+    color: var(--color-fg-contrast-10);
 }
 
 @media (max-width: 768px) {

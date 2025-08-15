@@ -22,12 +22,28 @@ class HomeController extends BaseController
 
     public function index(Request $request, Response $response): Response
     {
+        // Get page parameter
+        $page = (int) ($request->getQueryParams()['page'] ?? 1);
+        if ($page < 1) $page = 1;
+        
+        $perPage = 25;
+        $offset = ($page - 1) * $perPage;
+        
         try {
-            // Get stories from database
-            $stories = $this->storyService->getRecentStories();
+            // Get user and filtered tags
+            $user = null;
+            if (isset($_SESSION['user_id'])) {
+                $user = \App\Models\User::find($_SESSION['user_id']);
+            }
+            $excludeTagIds = $this->getFilteredTagIds($user);
+            
+            // Get stories from database with pagination, excluding filtered tags
+            $stories = $this->storyService->getStories($perPage, $offset, 'hot', $excludeTagIds);
+            $totalStories = $this->storyService->getTotalStories($excludeTagIds);
         } catch (\Exception $e) {
             // Fallback to empty array if database issues
             $stories = [];
+            $totalStories = 0;
         }
 
         $success = $_SESSION['story_success'] ?? null;
@@ -42,11 +58,22 @@ class HomeController extends BaseController
         // Set section header - both homepage and /active should show "Active Stories"
         $sectionHeader = 'Active Stories';
 
+        // Calculate pagination data
+        $totalPages = (int) ceil($totalStories / $perPage);
+        $pagination = [
+            'current_page' => $page,
+            'total_pages' => $totalPages,
+            'has_prev' => $page > 1,
+            'has_next' => $page < $totalPages,
+            'base_url' => ($path === '/active') ? '/active' : '/'
+        ];
+
         return $this->render($response, 'home/index', [
             'title' => $title,
             'section_header' => $sectionHeader,
             'stories' => $stories,
-            'success' => $success
+            'success' => $success,
+            'pagination' => $pagination
         ]);
     }
 
@@ -66,15 +93,42 @@ class HomeController extends BaseController
 
     public function recent(Request $request, Response $response): Response
     {
+        // Get page parameter
+        $page = (int) ($request->getQueryParams()['page'] ?? 1);
+        if ($page < 1) $page = 1;
+        
+        $perPage = 25;
+        $offset = ($page - 1) * $perPage;
+        
         try {
-            $stories = $this->storyService->getRecentStories();
+            // Get user and filtered tags
+            $user = null;
+            if (isset($_SESSION['user_id'])) {
+                $user = \App\Models\User::find($_SESSION['user_id']);
+            }
+            $excludeTagIds = $this->getFilteredTagIds($user);
+            
+            $stories = $this->storyService->getStories($perPage, $offset, 'recent', $excludeTagIds);
+            $totalStories = $this->storyService->getTotalStories($excludeTagIds);
         } catch (\Exception $e) {
             $stories = [];
+            $totalStories = 0;
         }
+
+        // Calculate pagination data
+        $totalPages = (int) ceil($totalStories / $perPage);
+        $pagination = [
+            'current_page' => $page,
+            'total_pages' => $totalPages,
+            'has_prev' => $page > 1,
+            'has_next' => $page < $totalPages,
+            'base_url' => '/recent'
+        ];
 
         return $this->render($response, 'home/recent', [
             'title' => 'Recent | Assurify',
-            'stories' => $stories
+            'stories' => $stories,
+            'pagination' => $pagination
         ]);
     }
 
@@ -102,5 +156,30 @@ class HomeController extends BaseController
         
         $response->getBody()->write($rssContent);
         return $response->withHeader('Content-Type', 'application/rss+xml; charset=utf-8');
+    }
+
+    private function getFilteredTagIds($user): array
+    {
+        if ($user) {
+            // Get from user's database filters
+            // TODO: Implement database filtering for logged users
+            return [];
+        } else {
+            // Get from cookie
+            return $this->getCookieFilteredTagIds();
+        }
+    }
+    
+    private function getCookieFilteredTagIds(): array
+    {
+        $cookieValue = $_COOKIE['tag_filters'] ?? '';
+        if (empty($cookieValue)) {
+            return [];
+        }
+        
+        $tagNames = explode(',', $cookieValue);
+        $tags = $this->tagService->getTagsByNames($tagNames);
+        
+        return array_column($tags, 'id');
     }
 }

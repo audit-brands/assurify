@@ -390,6 +390,8 @@ header {
 	letter-spacing: -1px;
 	text-decoration: none;
 	transition: color 0.2s ease;
+	line-height: 1.2;
+	display: inline-block;
 }
 
 .logo:hover .logo-text {
@@ -421,6 +423,8 @@ header#nav {
 	box-sizing: border-box;
 	display: flex;
 	padding: 0.5rem 0.5rem 0 0.5rem;
+	position: relative;
+	z-index: 100;
 }
 header#nav nav.links {
 	display: flex;
@@ -435,14 +439,132 @@ header#nav a, header#subnav a, header#subnav input[type="submit"] {
 }
 header#subnav {
 	box-sizing: border-box;
-	min-height: 2em;
+	height: 2.5em;
 	line-height: 1em;
 	padding: 0.5rem 0.25rem;
 	text-align: right;
 	width: 100%;
+	position: relative;
+	z-index: 99;
 }
 header#subnav a.current_page:last-child {
 	margin-right: 0.375rem;
+}
+
+/* Ensure consistent spacing between headers and main content */
+main#main {
+	margin-top: 1rem;
+	position: relative;
+	clear: both;
+}
+
+/* Prevent content from overlapping with fixed headers */
+#wrapper {
+	position: relative;
+}
+
+/* Users page styling */
+.users-page {
+	padding: 1rem;
+}
+
+.users-page h1 {
+	margin-bottom: 0.5rem;
+}
+
+.users-page p {
+	margin-bottom: 1rem;
+	font-size: 14px;
+}
+
+.users-page p a {
+	margin-right: 1rem;
+}
+
+.newest-users {
+	margin-bottom: 2rem;
+	padding: 1rem;
+	background: var(--color-box-bg);
+	border: 1px solid var(--color-box-border);
+	border-radius: 4px;
+}
+
+.newest-users h2 {
+	margin-bottom: 0.5rem;
+	color: var(--color-fg);
+	font-size: 16px;
+}
+
+.newest-users ul {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.newest-users li {
+	margin-bottom: 0.25rem;
+	font-size: 14px;
+}
+
+/* New user highlighting - green text */
+a.new-user {
+	color: #22c55e !important;
+	font-weight: bold;
+}
+
+/* User tree styling with indentation */
+.user-tree ul {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.user-tree li {
+	margin-bottom: 0.15rem;
+	font-size: 14px;
+	line-height: 1.4;
+}
+
+/* Indentation for tree levels */
+.user-tree .level-0 {
+	margin-left: 0;
+}
+
+.user-tree .level-1 {
+	margin-left: 1.5rem;
+}
+
+.user-tree .level-2 {
+	margin-left: 3rem;
+}
+
+.user-tree .level-3 {
+	margin-left: 4.5rem;
+}
+
+.user-tree .level-4 {
+	margin-left: 6rem;
+}
+
+.user-tree .level-5 {
+	margin-left: 7.5rem;
+}
+
+/* Additional levels continue the pattern */
+.user-tree ul[class*="level-"] {
+	margin-top: 0.25rem;
+}
+
+/* Users by karma styling */
+.users-by-karma ul {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.users-by-karma li {
+	margin-bottom: 0.25rem;
+	font-size: 14px;
 }
 header a.current_page {
 	border-bottom: 0.25em solid var(--color-accent);
@@ -1677,6 +1799,8 @@ input[type="submit"].link_post.pushover_button {
 	}
 	header#subnav {
 		background-color: var(--color-box-bg-shaded);
+		height: 2.5em;
+		padding: 0.5rem 0.25rem;
 	}
 	header#subnav a:last-child {
 		margin-right: 0.75rem;
@@ -4063,6 +4187,469 @@ h3.story-title .story-tags .tag {
 		padding: 0.4rem 0.6rem;
 		font-size: 0.8rem;
 	}
+}
+
+/* Page styling */
+.about-page, .tags-page, .filter-page, .moderation-log-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 1em;
+    line-height: 1.6;
+}
+
+.about-page h1, .tags-page h1, .filter-page h1, .moderation-log-page h1 {
+    color: #333;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 0.5em;
+    margin-bottom: 1em;
+}
+
+.about-page h2, .tags-page h2, .filter-page h2, .moderation-log-page h2 {
+    color: #444;
+    margin-top: 2em;
+    margin-bottom: 1em;
+}
+
+.about-page ul, .tags-page ul, .filter-page ul {
+    margin: 1em 0;
+    padding-left: 2em;
+}
+
+.about-page li, .tags-page li, .filter-page li {
+    margin: 0.5em 0;
+}
+
+/* Tags page styling */
+.tag-category {
+    margin: 2em 0;
+}
+
+.tag-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1em;
+    margin: 1em 0;
+}
+
+.tag-item {
+    padding: 1em;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+}
+
+.tag-item strong {
+    color: #6f42c1;
+    font-family: monospace;
+}
+
+.all-tags {
+    margin-top: 2em;
+    padding-top: 2em;
+    border-top: 2px solid #eee;
+}
+
+.tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5em;
+    margin: 1em 0;
+}
+
+.tag-badge {
+    display: inline-block;
+    padding: 0.25em 0.5em;
+    background: #e9ecef;
+    border-radius: 3px;
+    font-size: 0.875em;
+}
+
+.tag-badge strong {
+    color: #6f42c1;
+}
+
+.tags-help {
+    margin-top: 2em;
+    padding: 1.5em;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+}
+
+/* Filter page styling */
+.notice {
+    padding: 1em;
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 4px;
+    margin: 1em 0;
+    color: #856404;
+}
+
+.filter-form {
+    margin: 2em 0;
+}
+
+.filter-section {
+    margin: 2em 0;
+    padding: 1.5em;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+}
+
+.tag-categories {
+    margin: 1em 0;
+}
+
+.tag-category {
+    margin: 1.5em 0;
+}
+
+.tag-category h3 {
+    color: #495057;
+    margin-bottom: 0.5em;
+    font-size: 1.1em;
+}
+
+.tag-checkboxes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 0.5em;
+    margin: 0.5em 0;
+}
+
+.tag-checkbox {
+    display: flex;
+    align-items: center;
+    padding: 0.5em;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background-color 0.2s;
+}
+
+.tag-checkbox:hover {
+    background: #f8f9fa;
+}
+
+.tag-checkbox input[type="checkbox"] {
+    margin-right: 0.5em;
+}
+
+.tag-count {
+    color: #6c757d;
+    font-size: 0.875em;
+    margin-left: 0.5em;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1em;
+    margin: 2em 0;
+    padding-top: 1em;
+    border-top: 1px solid #e9ecef;
+}
+
+.submit-button, .clear-button {
+    padding: 0.75em 1.5em;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.2s;
+}
+
+.submit-button {
+    background: #007bff;
+    color: white;
+}
+
+.submit-button:hover {
+    background: #0056b3;
+}
+
+.clear-button {
+    background: #6c757d;
+    color: white;
+}
+
+.clear-button:hover {
+    background: #545b62;
+}
+
+/* Moderation log styling */
+.moderation-stats {
+    margin: 1em 0;
+    padding: 1em;
+    background: #f8f9fa;
+    border-radius: 4px;
+    font-size: 0.9em;
+    color: #6c757d;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3em;
+    color: #6c757d;
+}
+
+.moderation-entries {
+    margin: 2em 0;
+}
+
+.moderation-entry {
+    padding: 1em;
+    border-bottom: 1px solid #e9ecef;
+    margin: 0.5em 0;
+}
+
+.moderation-header {
+    display: flex;
+    justify-content: space-between;
+    color: #6c757d;
+    font-size: 0.875em;
+    margin-bottom: 0.5em;
+}
+
+.moderation-action {
+    margin: 0.5em 0;
+}
+
+.action-type {
+    font-weight: bold;
+    color: #dc3545;
+}
+
+.target-type {
+    color: #6c757d;
+    font-style: italic;
+}
+
+.moderation-reason {
+    margin: 0.5em 0;
+    color: #495057;
+    font-style: italic;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5em;
+    margin: 2em 0;
+}
+
+.pagination-link {
+    padding: 0.5em 1em;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #007bff;
+    transition: background-color 0.2s;
+}
+
+.pagination-link:hover {
+    background: #f8f9fa;
+}
+
+.pagination-current {
+    padding: 0.5em 1em;
+    border: 1px solid #007bff;
+    border-radius: 4px;
+    background: #007bff;
+    color: white;
+    font-weight: bold;
+}
+
+.moderation-info {
+    margin-top: 3em;
+    padding-top: 2em;
+    border-top: 2px solid #e9ecef;
+}
+
+/* Pagination styling - matches Lobste.rs minimalist style */
+.pagination {
+    margin: 2em 0 1em 0;
+    text-align: left;
+    font-size: inherit;
+}
+
+.pagination a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.pagination a:hover {
+    text-decoration: underline;
+}
+
+/* Footer styling - matches Lobste.rs exactly */
+footer {
+    box-sizing: border-box;
+    display: flex;
+    padding: 2em 0.5em;
+    justify-content: flex-end;
+    width: 100%;
+}
+
+footer nav {
+    display: flex;
+}
+
+footer nav a {
+    padding-left: 0.75em;
+    text-decoration: none;
+    color: rgba(200, 200, 200, 0.8); /* Light gray for dark background */
+    font-size: inherit;
+}
+
+footer nav a:hover {
+    color: rgba(200, 200, 200, 1.0); /* Full opacity on hover */
+}
+
+/* Mobile responsive footer */
+@media only screen and (max-width: 480px) {
+    footer nav {
+        text-align: right;
+    }
+}
+
+/* Lobste.rs-style compact story layout (new) */
+.stories .story {
+    padding: 0.4em 0;
+    margin-bottom: 0.5em;
+    line-height: 1.3;
+}
+
+.stories .story .story-content {
+    width: 100%;
+}
+
+/* CSS Variables for Lobste.rs theming */
+:root {
+    --color-fg-link: rgb(28 89 209);
+    --color-fg-link-visited: rgb(95 134 212);
+    --color-fg-contrast-4-5: rgba(0, 0, 0, 0.6);
+    --color-fg-contrast-10: rgba(0, 0, 0, 0.8);
+    --color-tag-bg: #f0f0f0;
+    --color-tag-border: #ddd;
+}
+
+/* Dark theme support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-fg-link: rgb(138 177 255);
+        --color-fg-link-visited: rgb(79 138 255);
+        --color-fg-contrast-4-5: rgba(255, 255, 255, 0.6);
+        --color-fg-contrast-10: rgba(255, 255, 255, 0.8);
+        --color-tag-bg: #444;
+        --color-tag-border: #666;
+    }
+}
+
+/* Exact Lobste.rs story layout */
+.stories .story .title-line {
+    line-height: 1.45em;
+    margin-bottom: 1px;
+}
+
+.stories .story .upvoter, 
+.stories .story .upvoter-guest {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 9.5pt;
+    color: var(--color-fg-contrast-4-5);
+    padding: 0;
+    margin: 0 0.5em 0 0;
+    display: inline;
+    text-decoration: none;
+}
+
+.stories .story .upvoter:hover {
+    color: #ff6600;
+}
+
+.stories .story .upvoter-guest {
+    cursor: pointer;
+    color: var(--color-fg-contrast-4-5);
+}
+
+.stories .story .story-voting.upvoted .upvoter {
+    color: #ff6600;
+}
+
+/* Story title - exact Lobste.rs specs */
+.stories .story .story-title {
+    font-size: 11.5pt;
+    font-weight: normal;
+    color: var(--color-fg-link);
+    text-decoration: none;
+    margin-right: 0.25em;
+}
+
+.stories .story .story-title:visited {
+    color: var(--color-fg-link-visited);
+}
+
+.stories .story .story-title:hover {
+    text-decoration: underline;
+}
+
+/* Tags - exact Lobste.rs specs */
+.stories .story .story-tags {
+    display: inline;
+}
+
+.stories .story .story-tags .tag {
+    background-color: var(--color-tag-bg);
+    border: 1px solid var(--color-tag-border);
+    border-radius: 5px;
+    color: var(--color-fg-contrast-10);
+    font-size: 8pt;
+    margin-left: 0.25em;
+    padding: 0px 0.4em 1px 0.4em;
+    text-decoration: none;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.stories .story .story-tags .tag:hover {
+    background-color: var(--color-tag-bg);
+    text-decoration: none;
+}
+
+/* Domain - exact Lobste.rs specs */
+.stories .story .story-domain {
+    color: var(--color-fg-contrast-4-5);
+    font-style: italic;
+    font-size: 9pt;
+    text-decoration: none;
+    vertical-align: middle;
+}
+
+.stories .story .story-domain a {
+    color: var(--color-fg-contrast-4-5);
+    text-decoration: none;
+}
+
+.stories .story .story-domain a:hover {
+    text-decoration: underline;
+}
+
+/* Byline - exact Lobste.rs specs */
+.stories .story .byline {
+    color: var(--color-fg-contrast-4-5);
+    font-size: 9.5pt;
+    margin-top: 1px;
+}
+
+.stories .story .byline a {
+    color: var(--color-fg-contrast-4-5);
+    text-decoration: none;
+}
+
+.stories .story .byline a:hover {
+    text-decoration: underline;
 }
 
 /* Unread Message Badge */

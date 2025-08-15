@@ -429,4 +429,16 @@ class CommentService
             }
         }
     }
+
+    /**
+     * Get total count of non-deleted comments
+     */
+    public function getTotalComments(): int
+    {
+        try {
+            return Comment::where('is_deleted', false)->count();
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
 }

@@ -84,26 +84,46 @@ class UserController extends BaseController
 
     public function index(Request $request, Response $response): Response
     {
-        // Get top users by karma
-        $topUsers = User::orderBy('karma', 'desc')
-                       ->where('karma', '>', 0)
-                       ->limit(50)
-                       ->get();
-
-        $formattedUsers = $topUsers->map(function ($user) {
-            return [
-                'username' => $user->username,
-                'karma' => $user->karma,
-                'created_at_formatted' => $user->created_at ? $user->created_at->format('M j, Y') : 'Unknown',
-                'is_admin' => $user->is_admin,
-                'is_moderator' => $user->is_moderator,
-                'hats' => $this->userService->getUserHats($user)
-            ];
-        });
-
+        $sortBy = $request->getQueryParams()['by'] ?? 'tree';
+        
+        if ($sortBy === 'karma') {
+            // Show users sorted by karma
+            $users = User::with(['invitedBy'])
+                        ->orderBy('karma', 'desc')
+                        ->limit(100)
+                        ->get();
+            
+            $formattedUsers = $users->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'username' => $user->username,
+                    'karma' => $user->karma,
+                    'invited_by' => $user->invitedBy ? $user->invitedBy->username : null,
+                    'is_new' => $this->isNewUser($user),
+                    'is_admin' => $user->is_admin,
+                    'is_moderator' => $user->is_moderator
+                ];
+            })->toArray();
+            
+            return $this->render($response, 'users/index', [
+                'title' => 'Users by Karma | Assurify',
+                'users' => $formattedUsers,
+                'sort_by' => 'karma',
+                'newest_users' => []
+            ]);
+        }
+        
+        // Default: Show invitation tree
+        $newestUsers = $this->getNewestUsers();
+        $userTree = $this->buildUserTree();
+        $totalUsers = User::count();
+        
         return $this->render($response, 'users/index', [
             'title' => 'Users | Assurify',
-            'users' => $formattedUsers
+            'user_tree' => $userTree,
+            'newest_users' => $newestUsers,
+            'total_users' => $totalUsers,
+            'sort_by' => 'tree'
         ]);
     }
 
@@ -166,6 +186,7 @@ class UserController extends BaseController
         
         // Convert checkbox values to booleans
         $settings = [
+            'username' => $data['username'] ?? '',
             'email' => $data['email'] ?? '',
             'show_avatars' => isset($data['show_avatars']),
             'show_story_previews' => isset($data['show_story_previews']),
@@ -294,5 +315,98 @@ class UserController extends BaseController
         
         $parsed = parse_url($url);
         return $parsed['host'] ?? '';
+    }
+    
+    private function getNewestUsers(int $limit = 10): array
+    {
+        return User::with(['invitedBy'])
+                  ->orderBy('id', 'desc')
+                  ->limit($limit)
+                  ->get()
+                  ->map(function ($user) {
+                      return [
+                          'id' => $user->id,
+                          'username' => $user->username,
+                          'karma' => $user->karma,
+                          'invited_by' => $user->invitedBy ? $user->invitedBy->username : null,
+                          'is_new' => $this->isNewUser($user),
+                          'is_admin' => $user->is_admin,
+                          'is_moderator' => $user->is_moderator
+                      ];
+                  })
+                  ->toArray();
+    }
+    
+    private function isNewUser(User $user): bool
+    {
+        $seventyDaysAgo = new \DateTime();
+        $seventyDaysAgo->sub(new \DateInterval('P70D'));
+        return $user->created_at > $seventyDaysAgo;
+    }
+    
+    private function buildUserTree(): array
+    {
+        // Get all users with their invitation relationships
+        $users = User::with(['invitedBy'])
+                    ->orderBy('karma', 'desc')
+                    ->get();
+        
+        $userMap = [];
+        $tree = [];
+        
+        // Create user map and format users
+        foreach ($users as $user) {
+            $formattedUser = [
+                'id' => $user->id,
+                'username' => $user->username,
+                'karma' => $user->karma,
+                'invited_by_user_id' => $user->invited_by_user_id,
+                'invited_by' => $user->invitedBy ? $user->invitedBy->username : null,
+                'is_new' => $this->isNewUser($user),
+                'is_admin' => $user->is_admin,
+                'is_moderator' => $user->is_moderator,
+                'children' => []
+            ];
+            
+            $userMap[$user->id] = $formattedUser;
+        }
+        
+        // Build the tree structure
+        foreach ($userMap as $user) {
+            if ($user['invited_by_user_id']) {
+                // This user was invited by someone, add to their children
+                if (isset($userMap[$user['invited_by_user_id']])) {
+                    $userMap[$user['invited_by_user_id']]['children'][] = &$userMap[$user['id']];
+                } else {
+                    // Invited by user not in our set, add to root
+                    $tree[] = &$userMap[$user['id']];
+                }
+            } else {
+                // Root user (not invited by anyone)
+                $tree[] = &$userMap[$user['id']];
+            }
+        }
+        
+        // Sort tree by karma (highest first)
+        usort($tree, function ($a, $b) {
+            return $b['karma'] - $a['karma'];
+        });
+        
+        // Recursively sort children by karma
+        $this->sortTreeByKarma($tree);
+        
+        return $tree;
+    }
+    
+    private function sortTreeByKarma(array &$tree): void
+    {
+        foreach ($tree as &$user) {
+            if (!empty($user['children'])) {
+                usort($user['children'], function ($a, $b) {
+                    return $b['karma'] - $a['karma'];
+                });
+                $this->sortTreeByKarma($user['children']);
+            }
+        }
     }
 }

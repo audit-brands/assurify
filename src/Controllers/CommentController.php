@@ -210,11 +210,28 @@ class CommentController extends BaseController
             $hasMore = false;
         }
 
+        // Calculate total comments for proper pagination
+        try {
+            $totalComments = $this->commentService->getTotalComments();
+            $totalPages = (int) ceil($totalComments / $commentsPerPage);
+        } catch (\Exception $e) {
+            $totalComments = 0;
+            $totalPages = 1;
+        }
+
+        // Create pagination data matching Lobste.rs pattern
+        $pagination = [
+            'current_page' => $page,
+            'total_pages' => $totalPages,
+            'has_prev' => $page > 1,
+            'has_next' => $page < $totalPages,
+            'base_url' => '/comments'
+        ];
+
         return $this->render($response, 'comments/index', [
             'title' => 'Comments | Assurify',
             'comments' => $comments,
-            'page' => $page,
-            'hasMore' => $hasMore
+            'pagination' => $pagination
         ]);
     }
 
