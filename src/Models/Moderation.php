@@ -138,7 +138,8 @@ class Moderation extends Model
             'action' => $action,
             'reason' => $reason,
             'metadata' => $metadata,
-            'ip_address' => $ipAddress ?? ($_SERVER['REMOTE_ADDR'] ?? null)
+            'ip_address' => $ipAddress ?? ($_SERVER['REMOTE_ADDR'] ?? null),
+            'token' => bin2hex(random_bytes(16)) // Generate a random token
         ];
 
         // Handle both old format and new format

@@ -8,11 +8,24 @@ use App\Controllers\ModController;
 use App\Models\Story;
 use App\Models\Tag;
 use App\Models\Moderation;
+use App\Services\StoryService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
 class StoriesController extends ModController
 {
+    private function generateSlug(string $title): string
+    {
+        if (empty($title)) {
+            return 'untitled';
+        }
+        $slug = strtolower(trim($title));
+        $slug = preg_replace('/[^a-z0-9-]/', '_', $slug);
+        $slug = preg_replace('/_+/', '_', $slug);
+        $slug = trim($slug, '_');
+        return substr($slug ?: 'untitled', 0, 50);
+    }
+
     public function edit(Request $request, Response $response, array $args): Response
     {
         if (!$this->requireModerator()) {
@@ -67,6 +80,15 @@ class StoriesController extends ModController
             $story = Story::where('short_id', $shortId)->firstOrFail();
             $data = $request->getParsedBody();
             
+            // Handle JSON request body if getParsedBody returns null
+            if ($data === null) {
+                $jsonBody = (string) $request->getBody();
+                $data = json_decode($jsonBody, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    return $this->json($response, ['error' => 'Invalid JSON data'], 400);
+                }
+            }
+            
             // Store original values for logging
             $originalTitle = $story->title;
             $originalDescription = $story->description;
@@ -79,7 +101,7 @@ class StoriesController extends ModController
             $story->url = trim($data['url'] ?? '') ?: null;
             $story->moderation_reason = trim($data['moderation_reason'] ?? '') ?: null;
             $story->is_unavailable = !empty($data['is_unavailable']);
-            $story->updated_at = now();
+            $story->updated_at = date('Y-m-d H:i:s');
 
             // Handle tag updates
             if (isset($data['tags']) && is_array($data['tags'])) {
@@ -128,10 +150,11 @@ class StoriesController extends ModController
                 );
             }
 
+            $slug = $this->generateSlug($story->title);
             return $this->json($response, [
                 'success' => true,
                 'message' => 'Story updated successfully',
-                'redirect' => "/s/{$story->short_id}"
+                'redirect' => "/s/{$story->short_id}/{$slug}"
             ]);
 
         } catch (\Exception $e) {
@@ -168,7 +191,7 @@ class StoriesController extends ModController
 
             $story->is_deleted = true;
             $story->moderation_reason = $moderationReason ?: null;
-            $story->updated_at = now();
+            $story->updated_at = date('Y-m-d H:i:s');
             $story->save();
 
             // Log the moderation action
@@ -179,10 +202,11 @@ class StoriesController extends ModController
                 ['deleted_by_author' => $story->user_id === $currentUser->id]
             );
 
+            $slug = $this->generateSlug($story->title);
             return $this->json($response, [
                 'success' => true,
                 'message' => 'Story deleted successfully',
-                'redirect' => "/s/{$story->short_id}"
+                'redirect' => "/s/{$story->short_id}/{$slug}"
             ]);
 
         } catch (\Exception $e) {
@@ -212,7 +236,7 @@ class StoriesController extends ModController
             $story->is_deleted = false;
             $story->moderation_reason = $moderationReason ?: null;
             $story->merged_into_story_id = null; // Unmerge if it was merged
-            $story->updated_at = now();
+            $story->updated_at = date('Y-m-d H:i:s');
             $story->save();
 
             // Log the moderation action
@@ -222,10 +246,11 @@ class StoriesController extends ModController
                 $moderationReason
             );
 
+            $slug = $this->generateSlug($story->title);
             return $this->json($response, [
                 'success' => true,
                 'message' => 'Story undeleted successfully',
-                'redirect' => "/s/{$story->short_id}"
+                'redirect' => "/s/{$story->short_id}/{$slug}"
             ]);
 
         } catch (\Exception $e) {
