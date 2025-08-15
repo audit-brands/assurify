@@ -38,12 +38,68 @@ class PageController extends BaseController
         // Get most popular tags
         $popularTags = array_slice($allTags, 0, 20);
         
+        // Check if user is admin or moderator
+        $canEdit = false;
+        if (isset($_SESSION['user_id'])) {
+            $user = \App\Models\User::find($_SESSION['user_id']);
+            $canEdit = $user && (($user->is_admin ?? false) || ($user->is_moderator ?? false));
+        }
+        
         return $this->render($response, 'pages/tags', [
             'title' => 'Tags | Assurify',
             'tags' => $allTags,
             'categorized_tags' => $categorizedTags,
-            'popular_tags' => $popularTags
+            'popular_tags' => $popularTags,
+            'can_edit' => $canEdit
         ]);
+    }
+
+    public function updateTag(Request $request, Response $response, array $args): Response
+    {
+        // Check admin permission
+        if (!isset($_SESSION['user_id'])) {
+            return $this->json($response, ['error' => 'Not authenticated'], 401);
+        }
+        
+        $user = \App\Models\User::find($_SESSION['user_id']);
+        if (!$user || !(($user->is_admin ?? false) || ($user->is_moderator ?? false))) {
+            return $this->json($response, ['error' => 'Access denied'], 403);
+        }
+
+        $data = $request->getParsedBody();
+        $tagId = $args['id'] ?? null;
+        
+        if (!$tagId) {
+            error_log("No tag ID found in route arguments");
+            return $this->json($response, ['error' => 'Tag ID not found'], 400);
+        }
+        
+        // Debug logging
+        error_log("UpdateTag called - TagID: $tagId, Data: " . print_r($data, true));
+        
+        try {
+            $tag = \App\Models\Tag::findOrFail($tagId);
+            
+            if (isset($data['description'])) {
+                $oldDescription = $tag->description;
+                $tag->description = trim($data['description']) ?: null;
+                $tag->save();
+                
+                error_log("Tag updated - ID: $tagId, Old: '$oldDescription', New: '{$tag->description}'");
+            }
+            
+            return $this->json($response, [
+                'success' => true,
+                'message' => 'Tag description updated successfully',
+                'tag_id' => $tagId,
+                'new_description' => $tag->description
+            ]);
+        } catch (\Exception $e) {
+            error_log("Error updating tag $tagId: " . $e->getMessage());
+            return $this->json($response, [
+                'error' => 'Failed to update tag: ' . $e->getMessage()
+            ], 500);
+        }
     }
     
     private function groupTagsByCategory(array $tags): array

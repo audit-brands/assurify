@@ -136,6 +136,7 @@ class TagService
 
             return $tags->map(function ($tag) {
                 return [
+                    'id' => $tag->id,
                     'tag' => $tag->tag,
                     'description' => $tag->description,
                     'privileged' => $tag->privileged,
@@ -507,5 +508,44 @@ class TagService
                 'description' => 'Arts, culture, and educational content'
             ]
         ];
+    }
+
+    public function getTagsByNames(array $tagNames): array
+    {
+        if (empty($tagNames)) {
+            return [];
+        }
+
+        // Check if database connection is available
+        if (!$this->isDatabaseAvailable()) {
+            // Return default tags that match the names
+            $defaultTags = $this->getDefaultTags();
+            return array_filter($defaultTags, function($tag) use ($tagNames) {
+                return in_array($tag['tag'], $tagNames);
+            });
+        }
+
+        try {
+            $tags = Tag::whereIn('tag', $tagNames)->get();
+            
+            return $tags->map(function ($tag) {
+                return [
+                    'id' => $tag->id,
+                    'tag' => $tag->tag,
+                    'description' => $tag->description,
+                    'story_count' => $tag->stories()->count(),
+                    'filter_count' => 0, // TODO: implement filter count tracking
+                    'inactive' => $tag->inactive ?? false
+                ];
+            })->toArray();
+            
+        } catch (\Exception $e) {
+            error_log("Database error in getTagsByNames: " . $e->getMessage());
+            // Fallback to default tags
+            $defaultTags = $this->getDefaultTags();
+            return array_filter($defaultTags, function($tag) use ($tagNames) {
+                return in_array($tag['tag'], $tagNames);
+            });
+        }
     }
 }

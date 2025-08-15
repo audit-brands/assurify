@@ -13,6 +13,7 @@ use App\Controllers\InvitationController;
 use App\Controllers\SearchController;
 use App\Controllers\ModerationController;
 use App\Controllers\AdminController;
+use App\Controllers\PageController;
 use App\Controllers\Api\AuthApiController;
 use App\Controllers\Api\StoriesApiController;
 use App\Controllers\Api\V2\StoriesApiController as V2StoriesApiController;
@@ -53,7 +54,14 @@ $app->group('/comments', function (RouteCollectorProxy $group) {
 
 // Tag routes
 $app->get('/t/{tag}', [TagController::class, 'show']);
-$app->get('/tags', [TagController::class, 'index']);
+$app->post('/admin/tags/{id}/update', [PageController::class, 'updateTag']);
+
+// Page routes
+$app->get('/about', [PageController::class, 'about']);
+$app->get('/tags', [PageController::class, 'tags']);
+$app->get('/filter', [PageController::class, 'filter']);
+$app->post('/filter', [PageController::class, 'filter']);
+$app->get('/moderation-log', [PageController::class, 'moderationLog']);
 
 // User routes
 $app->get('/u/{username}', [UserController::class, 'show']);
