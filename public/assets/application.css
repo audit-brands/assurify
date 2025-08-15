@@ -670,6 +670,22 @@ div.voters {
 	width: 40px;
 }
 
+/* Tighter spacing for comment voters */
+li.comments_subtree div.voters {
+	width: 30px;
+}
+
+/* Comment score styling - only affects comments, not homepage stories */
+div.voters .score {
+	font-size: 10px;
+	color: var(--color-fg-contrast-7-5);
+	margin: 2px 0;
+	font-family: Verdana, sans-serif;
+	font-weight: normal;
+	text-align: center;
+	display: block;
+}
+
 /* Upvoter triangle styles moved to voting.css */
 /* Upvoter styles moved to voting.css */
 .upvoter:focus { outline: none; } /* don't outline after upvote click */
@@ -795,6 +811,7 @@ li .comment_folder {
 	width: 1.5em;
 	cursor: pointer;
 	text-align: center;
+	margin-left: -6px;
 }
 li .comment_folder:before {
 	content: "[−]";

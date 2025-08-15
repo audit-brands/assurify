@@ -96,15 +96,15 @@ $this->layout('layout', ['title' => $title]) ?>
             </div>
         <?php endif ?>
         
-        <div class="comments-list">
-            <?php if (empty($comments)) : ?>
-                <p class="no-comments">No comments yet. Be the first to comment!</p>
-            <?php else : ?>
+        <?php if (empty($comments)) : ?>
+            <p class="no-comments">No comments yet. Be the first to comment!</p>
+        <?php else : ?>
+            <ol class="comments comments1">
                 <?php foreach ($comments as $comment) : ?>
                     <?=$this->insert('comments/_comment', ['comment' => $comment])?>
                 <?php endforeach ?>
-            <?php endif ?>
-        </div>
+            </ol>
+        <?php endif ?>
     </div>
 </div>
 
@@ -117,8 +117,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Story voting (authenticated users)
-    document.querySelectorAll('.upvoter').forEach(button => {
+    // Story voting (authenticated users) - only target story voting, not comments
+    document.querySelectorAll('.story-voting .upvoter[data-story-id]').forEach(button => {
         button.addEventListener('click', function() {
             const storyId = this.dataset.storyId;
             const vote = parseInt(this.dataset.vote);
@@ -161,7 +161,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Reply link functionality - simplified and more robust
     function setupReplyFunctionality() {
         console.log('Setting up reply functionality...');
-        const replyLinks = document.querySelectorAll('.reply-link');
+        const replyLinks = document.querySelectorAll('.comment_replier');
         console.log('Found', replyLinks.length, 'reply links');
         
         replyLinks.forEach((link, index) => {
@@ -244,7 +244,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Cancel button clicked');
             const form = this.closest('.reply-form');
             const commentId = form.id.replace('reply-form-', '');
-            const replyLink = document.querySelector(`[data-comment-id="${commentId}"].reply-link`);
+            const replyLink = document.querySelector(`[data-comment-id="${commentId}"].comment_replier`);
             
             console.log('Hiding form:', form.id);
             
@@ -266,65 +266,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Comment collapse/expand functionality
-    document.querySelectorAll('.comment-toggle').forEach(button => {
-        button.addEventListener('click', function() {
-            const commentId = this.dataset.commentId;
-            const commentBody = document.querySelector(`.comment-body[data-comment-id="${commentId}"]`);
-            const isCollapsed = commentBody.style.display === 'none';
-            
-            if (isCollapsed) {
-                // Expand comment
-                commentBody.style.display = 'block';
-                this.textContent = '[-]';
-                this.title = 'Collapse comment';
-            } else {
-                // Collapse comment
-                commentBody.style.display = 'none';
-                this.textContent = '[+]';
-                this.title = 'Expand comment';
-            }
-        });
-    });
+    // Comment collapse/expand functionality now handled by CSS with checkbox
+    // No JavaScript needed - the label triggers the checkbox which CSS responds to
     
-    // Comment voting
-    document.querySelectorAll('.comment-voting .upvoter').forEach(button => {
-        button.addEventListener('click', function() {
-            const commentId = this.dataset.commentId;
-            const vote = parseInt(this.dataset.vote);
-            
-            fetch(`/comments/${commentId}/vote`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ vote: vote })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const scoreElement = this.parentElement.querySelector('.vote-score');
-                    if (scoreElement) {
-                        scoreElement.textContent = data.score;
-                    }
-                    
-                    // Update button state
-                    const votingDiv = this.parentElement;
-                    if (data.voted) {
-                        votingDiv.classList.add('upvoted');
-                    } else {
-                        votingDiv.classList.remove('upvoted');
-                    }
-                } else {
-                    alert(data.error || 'Failed to vote');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Failed to vote');
-            });
-        });
-    });
+    // Comment voting now handled by global application.js
 });
 </script>
 

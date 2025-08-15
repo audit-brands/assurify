@@ -24,12 +24,15 @@
     display: block;
 }
 
-.upvoter:before, .upvoter-guest:before {
+/* Show triangles for both story and comment voting (both use .voters structure) */
+.voters .upvoter:before, .voters .upvoter-guest:before {
     content: "\25B2";  /* Unicode triangle up */
-    color: rgba(255, 255, 255, 0.4);  /* Fallback for dark theme */
+    color: rgba(255, 255, 255, 0.8);  /* More visible for debugging */
     font-size: 16px;
     display: block;
     line-height: 1;
+    font-weight: normal;
+    text-align: center;
 }
 
 /* Guest upvoter - visible and clickable (redirects to login) */
@@ -40,12 +43,12 @@
     cursor: pointer;
 }
 
-.upvoted .upvoter:before, 
-.upvoter:hover:before {
+.voters .upvoted .upvoter:before, 
+.voters .upvoter:hover:before {
     color: #ff4444;  /* Red accent color */
 }
 
-.upvoter-guest:hover:before {
+.voters .upvoter-guest:hover:before {
     color: rgba(255, 255, 255, 0.6);  /* Slightly brighter on hover for guests */
 }
 

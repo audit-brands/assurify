@@ -14,9 +14,11 @@
                     <div class="voters">
                         <label for="comment_folder_<?=$comment['short_id']?>" class="comment_folder"></label>
                         <?php if (isset($_SESSION['user_id']) && $_SESSION['user_id'] != $comment['user_id']) : ?>
-                            <div class="upvoter" data-comment-id="<?=$comment['id']?>" data-vote="1" title="Upvote"><?=$comment['score']?></div>
+                            <button class="upvoter" data-comment-id="<?=$comment['id']?>" data-vote="1" title="Upvote"><?=$comment['score']?></button>
+                        <?php elseif (isset($_SESSION['user_id'])) : ?>
+                            <div class="upvoter" title="Cannot vote on your own comment"><?=$comment['score']?></div>
                         <?php else : ?>
-                            <div class="upvoter"><?=$comment['score']?></div>
+                            <span class="upvoter-guest" title="Login to vote"><?=$comment['score']?></span>
                         <?php endif ?>
                     </div>
                     
@@ -88,53 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('User is NOT logged in');
     <?php endif ?>
 
-    // Comment voting functionality
-    document.querySelectorAll('.upvoter[data-comment-id]').forEach(button => {
-        // Make sure it's clickable
-        button.style.cursor = 'pointer';
-        
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const commentId = this.dataset.commentId;
-            const vote = parseInt(this.dataset.vote);
-            
-            console.log('Voting on comment:', commentId, 'with vote:', vote);
-            
-            fetch(`/comments/${commentId}/vote`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ vote: vote })
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Vote response:', data);
-                if (data.success) {
-                    // Update score display
-                    this.textContent = data.score;
-                    
-                    // Update button state
-                    const votingDiv = this.parentElement;
-                    if (data.voted) {
-                        votingDiv.classList.add('upvoted');
-                        this.classList.add('voted');
-                    } else {
-                        votingDiv.classList.remove('upvoted');
-                        this.classList.remove('voted');
-                    }
-                } else {
-                    alert(data.error || 'Failed to vote');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Failed to vote');
-            });
-        });
-    });
+    // Comment voting now handled by global application.js
     
     // Reply link functionality
     function setupReplyFunctionality() {

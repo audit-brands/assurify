@@ -8,13 +8,17 @@
     <?php else : ?>
         <?php foreach ($stories as $story) : ?>
             <div class="story">
+                <div class="voters">
+                    <?php if (isset($_SESSION['user_id'])) : ?>
+                        <button class="upvoter" data-story-id="<?=$story['id']?>" data-vote="1" title="Upvote"></button>
+                    <?php else : ?>
+                        <span class="upvoter-guest" title="Login to vote"></span>
+                    <?php endif ?>
+                    <span class="score"><?=$story['score']?></span>
+                </div>
+                
                 <div class="story-content">
                     <div class="title-line">
-                        <?php if (isset($_SESSION['user_id'])) : ?>
-                            <button class="upvoter" data-story-id="<?=$story['id']?>" data-vote="1" title="Upvote">[<?=$story['score']?>]</button>
-                        <?php else : ?>
-                            <span class="upvoter-guest" title="Login to vote">[<?=$story['score']?>]</span>
-                        <?php endif ?>
                         <a href="<?=$story['url']?>" class="story-title"><?=$this->e($story['title'])?></a>
                         <?php if (!empty($story['tags'])) : ?>
                             <span class="story-tags">
@@ -64,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Handle story voting (upvote only - Lobsters style) for authenticated users
-    document.querySelectorAll('.upvoter').forEach(button => {
+    document.querySelectorAll('.upvoter[data-story-id]').forEach(button => {
         button.addEventListener('click', function() {
             const storyId = this.dataset.storyId;
             const vote = parseInt(this.dataset.vote);
@@ -80,7 +84,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success) {
                     // Update the score display
-                    const scoreElement = this.parentElement.querySelector('.vote-score');
+                    const scoreElement = this.parentElement.querySelector('.score');
                     if (scoreElement) {
                         scoreElement.textContent = data.score;
                     }
