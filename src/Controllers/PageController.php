@@ -40,9 +40,15 @@ class PageController extends BaseController
         
         // Check if user is admin or moderator
         $canEdit = false;
+        $categories = [];
         if (isset($_SESSION['user_id'])) {
             $user = \App\Models\User::find($_SESSION['user_id']);
             $canEdit = $user && (($user->is_admin ?? false) || ($user->is_moderator ?? false));
+            
+            // Get categories for tag creation form if user can edit
+            if ($canEdit) {
+                $categories = \App\Models\TagCategory::orderBy('name')->get()->toArray();
+            }
         }
         
         return $this->render($response, 'pages/tags', [
@@ -50,7 +56,8 @@ class PageController extends BaseController
             'tags' => $allTags,
             'categorized_tags' => $categorizedTags,
             'popular_tags' => $popularTags,
-            'can_edit' => $canEdit
+            'can_edit' => $canEdit,
+            'categories' => $categories
         ]);
     }
 

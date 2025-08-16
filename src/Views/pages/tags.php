@@ -11,6 +11,26 @@
                 <a href="/admin/categories">Manage Tag Categories</a>
             </p>
         </div>
+        
+        <!-- Create New Tag Form -->
+        <div class="create-tag-section">
+            <h2>Create New Tag</h2>
+            <form id="create-tag-form" class="tag-form">
+                <div class="form-row">
+                    <input type="text" id="new-tag-name" placeholder="Tag Name (e.g., security, php, frontend)" required maxlength="25" pattern="[a-z0-9\-]+" title="Lowercase letters, numbers, and hyphens only">
+                    <input type="text" id="new-tag-description" placeholder="Tag Description (optional)" maxlength="200">
+                    <select id="new-tag-category">
+                        <option value="">Select Category (optional)</option>
+                        <?php if (!empty($categories)): ?>
+                            <?php foreach ($categories as $category): ?>
+                                <option value="<?= $category['id'] ?>"><?= $this->e($category['name']) ?></option>
+                            <?php endforeach ?>
+                        <?php endif ?>
+                    </select>
+                    <button type="submit">Create Tag</button>
+                </div>
+            </form>
+        </div>
     <?php endif ?>
     
     <?php if (!empty($popular_tags)): ?>
@@ -173,11 +193,146 @@
 .admin-tools a:hover {
     text-decoration: underline;
 }
+
+/* Create Tag Form Styling */
+.create-tag-section {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--color-fg-contrast-5);
+    border-radius: 5px;
+    padding: 1rem;
+    margin: 1rem 0 2rem 0;
+}
+
+.create-tag-section h2 {
+    margin: 0 0 1rem 0;
+    color: var(--color-fg);
+    font-size: 1.2em;
+}
+
+.tag-form .form-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.tag-form input,
+.tag-form select {
+    padding: 0.5rem;
+    border: 1px solid var(--color-fg-contrast-5);
+    border-radius: 3px;
+    background: var(--color-bg);
+    color: var(--color-fg);
+    font-family: inherit;
+}
+
+.tag-form input#new-tag-name {
+    flex: 1;
+    min-width: 200px;
+}
+
+.tag-form input#new-tag-description {
+    flex: 2;
+    min-width: 300px;
+}
+
+.tag-form select {
+    flex: 1;
+    min-width: 150px;
+}
+
+.tag-form button {
+    background-color: var(--color-accent);
+    border: 1px solid var(--color-accent-dark);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 3px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.tag-form button:hover {
+    background-color: var(--color-accent-hover);
+}
+
+.tag-form button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .tag-form .form-row {
+        flex-direction: column;
+    }
+    
+    .tag-form input,
+    .tag-form select {
+        width: 100%;
+        min-width: unset;
+    }
+}
 </style>
 
 <?php if ($can_edit): ?>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Handle tag creation form
+    document.getElementById('create-tag-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const tagName = document.getElementById('new-tag-name').value.trim().toLowerCase();
+        const description = document.getElementById('new-tag-description').value.trim();
+        const categoryId = document.getElementById('new-tag-category').value;
+        const submitBtn = this.querySelector('button[type="submit"]');
+        
+        if (!tagName) return;
+        
+        // Validate tag name format
+        if (!/^[a-z0-9\-]+$/.test(tagName)) {
+            alert('Tag name must contain only lowercase letters, numbers, and hyphens');
+            return;
+        }
+        
+        // Disable submit button
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creating...';
+        
+        fetch('/admin/tags/create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `tag=${encodeURIComponent(tagName)}&description=${encodeURIComponent(description)}&category_id=${encodeURIComponent(categoryId)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Clear the form
+                document.getElementById('new-tag-name').value = '';
+                document.getElementById('new-tag-description').value = '';
+                document.getElementById('new-tag-category').value = '';
+                
+                // Show success message
+                alert('Tag created successfully!');
+                
+                // Reload to show the new tag
+                location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Failed to create tag'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error creating tag: ' + error.message);
+        })
+        .finally(() => {
+            // Re-enable submit button
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Create Tag';
+        });
+    });
     // Handle edit button clicks
     document.querySelectorAll('.admin-edit-btn').forEach(button => {
         button.addEventListener('click', function() {

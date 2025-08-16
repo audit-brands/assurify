@@ -160,6 +160,7 @@ $app->group('/admin', function (RouteCollectorProxy $group) {
     $group->post('/categories/add', [AdminController::class, 'addCategory']);
     $group->post('/categories/{id}/update', [AdminController::class, 'updateCategory']);
     $group->post('/categories/{id}/delete', [AdminController::class, 'deleteCategory']);
+    $group->post('/tags/create', [AdminController::class, 'createTag']);
     $group->post('/tags/assign-category', [AdminController::class, 'assignTagToCategory']);
     $group->post('/tags/remove-category', [AdminController::class, 'removeTagFromCategory']);
     

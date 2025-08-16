@@ -492,6 +492,87 @@ class AdminController extends BaseController
         }
     }
 
+    public function createTag(Request $request, Response $response): Response
+    {
+        if (!$this->requireAdmin()) {
+            return $this->json($response, ['error' => 'Access denied'], 403);
+        }
+
+        $data = $request->getParsedBody();
+        $tagName = trim($data['tag'] ?? '');
+        $description = trim($data['description'] ?? '');
+        $categoryId = $data['category_id'] ?? null;
+
+        // Validate tag name
+        if (!$tagName) {
+            return $this->json($response, ['error' => 'Tag name is required'], 400);
+        }
+
+        // Ensure tag name is lowercase and follows naming convention
+        $tagName = strtolower($tagName);
+        if (!preg_match('/^[a-z0-9\-]+$/', $tagName)) {
+            return $this->json($response, ['error' => 'Tag name must contain only lowercase letters, numbers, and hyphens'], 400);
+        }
+
+        if (strlen($tagName) > 25) {
+            return $this->json($response, ['error' => 'Tag name must be 25 characters or less'], 400);
+        }
+
+        try {
+            // Check if tag already exists
+            $existingTag = \App\Models\Tag::where('tag', $tagName)->first();
+            if ($existingTag) {
+                return $this->json($response, ['error' => 'Tag already exists'], 400);
+            }
+
+            // Validate category if provided
+            if ($categoryId) {
+                $category = \App\Models\TagCategory::find($categoryId);
+                if (!$category) {
+                    return $this->json($response, ['error' => 'Invalid category'], 400);
+                }
+            }
+
+            // Create the tag
+            $tag = \App\Models\Tag::create([
+                'tag' => $tagName,
+                'description' => $description ?: null,
+                'category_id' => $categoryId ?: null,
+                'is_media' => false,
+                'inactive' => false,
+                'privileged' => false,
+                'hotness_mod' => 0.0
+            ]);
+
+            // Log the moderation action
+            $user = \App\Models\User::find($_SESSION['user_id']);
+            if ($user) {
+                Moderation::log(
+                    $user,
+                    'tag_created',
+                    $tag,
+                    null,
+                    [
+                        'tag_name' => $tagName,
+                        'description' => $description,
+                        'category_id' => $categoryId
+                    ]
+                );
+            }
+
+            return $this->json($response, [
+                'success' => true,
+                'message' => 'Tag created successfully',
+                'tag_id' => $tag->id,
+                'tag_name' => $tag->tag
+            ]);
+        } catch (\Exception $e) {
+            return $this->json($response, [
+                'error' => 'Failed to create tag: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function logs(Request $request, Response $response): Response
     {
         if (!$this->requireAdmin()) {
