@@ -32,6 +32,9 @@ use Slim\Routing\RouteCollectorProxy;
 $app->get('/', [HomeController::class, 'index']);
 $app->get('/active', [HomeController::class, 'index']); // Active = same as home (hot stories)
 $app->get('/recent', [HomeController::class, 'recent']);
+$app->get('/newest', [HomeController::class, 'newest']);
+$app->get('/top', [HomeController::class, 'top']);
+$app->get('/top/{duration}', [HomeController::class, 'top']);
 $app->get('/comments', [CommentController::class, 'index']);
 
 // Story routes
@@ -43,6 +46,7 @@ $app->group('/stories', function (RouteCollectorProxy $group) {
 
 $app->get('/s/{id}/edit', [StoryController::class, 'edit']);
 $app->post('/s/{id}/update', [StoryController::class, 'update']);
+$app->delete('/stories/{id}', [StoryController::class, 'delete']);
 $app->get('/s/{id}/{slug}', [StoryController::class, 'show']);
 
 // Comment routes
@@ -66,6 +70,7 @@ $app->post('/filter', [PageController::class, 'filter']);
 
 // User routes
 $app->get('/u/{username}', [UserController::class, 'show']);
+$app->get('/u/{username}/stories', [UserController::class, 'stories']);
 $app->get('/u/{username}/saved', [UserController::class, 'saved']);
 $app->get('/users', [UserController::class, 'index']);
 

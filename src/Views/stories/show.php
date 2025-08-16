@@ -68,8 +68,6 @@ $this->layout('layout', ['title' => $title]) ?>
             <a href="/mod/stories/<?=$this->e($story['short_id'])?>/edit" class="mod-link">mod edit</a>
             <?php if ($story['is_deleted'] ?? false) : ?>
                 <a href="/mod/stories/<?=$this->e($story['short_id'])?>/undelete" class="mod-link mod-undelete">undelete</a>
-            <?php else : ?>
-                <a href="/mod/stories/<?=$this->e($story['short_id'])?>/delete" class="mod-link mod-delete">delete</a>
             <?php endif ?>
         <?php endif ?>
     </div>

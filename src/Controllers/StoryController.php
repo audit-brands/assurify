@@ -299,4 +299,52 @@ class StoryController extends BaseController
             return $this->redirect($response, "/s/{$shortId}/edit");
         }
     }
+
+    public function delete(Request $request, Response $response, array $args): Response
+    {
+        // Require authentication
+        if (!isset($_SESSION['user_id'])) {
+            return $this->json($response, ['error' => 'Not authenticated'], 401);
+        }
+
+        $storyId = $args['id'] ?? null;
+        if (!$storyId) {
+            return $this->json($response, ['error' => 'Story ID required'], 400);
+        }
+
+        try {
+            // Find story by short_id or regular id
+            $story = \App\Models\Story::where('short_id', $storyId)
+                        ->orWhere('id', $storyId)
+                        ->first();
+
+            if (!$story) {
+                return $this->json($response, ['error' => 'Story not found'], 404);
+            }
+
+            // Check if user owns this story or is admin
+            $user = \App\Models\User::find($_SESSION['user_id']);
+            $canDelete = $story->user_id === $_SESSION['user_id'] || 
+                        ($user && ($user->is_admin ?? false));
+
+            if (!$canDelete) {
+                return $this->json($response, ['error' => 'You can only delete your own stories'], 403);
+            }
+
+            // Soft delete the story
+            $story->is_deleted = true;
+            $story->deleted_at = date('Y-m-d H:i:s');
+            $story->save();
+
+            return $this->json($response, [
+                'success' => true,
+                'message' => 'Story deleted successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->json($response, [
+                'error' => 'Failed to delete story: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

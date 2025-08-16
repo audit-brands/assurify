@@ -73,11 +73,21 @@ class UserController extends BaseController
             $savedStories = $this->formatStoriesForView($savedStoriesData);
         }
 
+        // Get user threads for threads tab
+        $userThreads = [];
+        if ($tab === 'threads') {
+            $userThreads = $this->getUserThreads($user);
+        }
+
+        // Get user's top tags for the status section
+        $userProfile['stats']['top_tags'] = $this->getUserTopTags($user);
+
         return $this->render($response, 'users/show', [
             'title' => $username . ' | Assurify',
             'user' => $userProfile,
             'tab' => $tab,
             'saved_stories' => $savedStories,
+            'user_threads' => $userThreads,
             'current_user_id' => $_SESSION['user_id'] ?? null
         ]);
     }
@@ -239,6 +249,89 @@ class UserController extends BaseController
         }
 
         return $this->redirect($response, '/settings');
+    }
+
+    public function stories(Request $request, Response $response, array $args): Response
+    {
+        $username = $args['username'];
+        $page = max(1, (int) ($request->getQueryParams()['page'] ?? 1));
+        $perPage = 25;
+        
+        // Get the user
+        $user = $this->userService->getUserByUsername($username);
+        if (!$user) {
+            return $this->render($response, 'users/not-found', [
+                'title' => 'User Not Found | Assurify',
+                'username' => $username
+            ]);
+        }
+
+        // Get user's submitted stories with pagination
+        $offset = ($page - 1) * $perPage;
+        $stories = \App\Models\Story::with(['user', 'tags'])
+            ->where('user_id', $user->id)
+            ->where('is_deleted', false)
+            ->orderBy('created_at', 'desc')
+            ->offset($offset)
+            ->limit($perPage)
+            ->get();
+
+        // Get total count for pagination
+        $totalStories = \App\Models\Story::where('user_id', $user->id)
+            ->where('is_deleted', false)
+            ->count();
+
+        $totalPages = (int) ceil($totalStories / $perPage);
+
+        // Format stories for display
+        $formattedStories = $stories->map(function ($story) {
+            return [
+                'id' => $story->id,
+                'title' => $story->title,
+                'url' => $story->url,
+                'short_id' => $story->short_id,
+                'slug' => $this->generateSlug($story->title),
+                'score' => $story->score ?? 0,
+                'comments_count' => $story->comments_count ?? 0,
+                'user' => [
+                    'username' => $story->user->username ?? 'Unknown',
+                    'id' => $story->user->id ?? null
+                ],
+                'tags' => $story->tags->map(function ($tag) {
+                    return [
+                        'tag' => $tag->tag,
+                        'description' => $tag->description
+                    ];
+                })->toArray(),
+                'created_at' => $story->created_at,
+                'time_ago' => $this->timeAgo($story->created_at),
+                'domain' => $this->extractDomain($story->url),
+                'description' => $story->description,
+                'is_ask' => empty($story->url),
+                'can_edit' => ($_SESSION['user_id'] ?? null) === $story->user_id
+            ];
+        })->toArray();
+
+        // Get user profile summary for header
+        $userProfile = [
+            'username' => $user->username,
+            'karma' => $user->karma,
+            'is_admin' => $user->is_admin ?? false,
+            'is_moderator' => $user->is_moderator ?? false,
+            'avatar_url' => $user->avatar_url ?? null
+        ];
+
+        return $this->render($response, 'users/stories', [
+            'title' => $username . "'s Stories | Assurify",
+            'user' => $userProfile,
+            'stories' => $formattedStories,
+            'page' => $page,
+            'total_pages' => $totalPages,
+            'total_stories' => $totalStories,
+            'has_prev' => $page > 1,
+            'has_next' => $page < $totalPages,
+            'current_user_id' => $_SESSION['user_id'] ?? null
+        ]);
     }
 
     public function saved(Request $request, Response $response, array $args): Response
@@ -407,6 +500,106 @@ class UserController extends BaseController
                 });
                 $this->sortTreeByKarma($user['children']);
             }
+        }
+    }
+
+    private function getUserThreads(User $user): array
+    {
+        // Get user's comments with replies to create threaded conversations
+        $comments = \App\Models\Comment::with(['story', 'replies.user'])
+            ->where('user_id', $user->id)
+            ->where('is_deleted', false)
+            ->orderBy('created_at', 'desc')
+            ->limit(20)
+            ->get();
+
+        $threads = [];
+        foreach ($comments as $comment) {
+            // Get replies to this comment for threading
+            $replies = $comment->replies()->with('user')
+                ->where('is_deleted', false)
+                ->orderBy('created_at', 'asc')
+                ->limit(5)
+                ->get();
+
+            $threadReplies = [];
+            foreach ($replies as $reply) {
+                $threadReplies[] = [
+                    'id' => $reply->id,
+                    'short_id' => $reply->short_id,
+                    'username' => $reply->user->username ?? 'Unknown',
+                    'comment' => $reply->comment,
+                    'markeddown_comment' => $reply->markeddown_comment,
+                    'score' => $reply->score ?? 0,
+                    'time_ago' => $this->timeAgo($reply->created_at)
+                ];
+            }
+
+            $threads[] = [
+                'id' => $comment->id,
+                'short_id' => $comment->short_id,
+                'comment' => $comment->comment,
+                'markeddown_comment' => $comment->markeddown_comment,
+                'score' => $comment->score ?? 0,
+                'story_title' => $comment->story->title ?? 'Unknown Story',
+                'story_short_id' => $comment->story->short_id ?? '',
+                'story_slug' => $this->generateSlug($comment->story->title ?? ''),
+                'time_ago' => $this->timeAgo($comment->created_at),
+                'replies' => $threadReplies
+            ];
+        }
+
+        return $threads;
+    }
+
+    private function getUserTopTags(User $user): array
+    {
+        try {
+            // Get user's most used tags from their stories
+            $topTags = \App\Models\Story::selectRaw('tags.tag as name, COUNT(*) as count')
+                ->join('taggings', 'stories.id', '=', 'taggings.story_id')
+                ->join('tags', 'taggings.tag_id', '=', 'tags.id')
+                ->where('stories.user_id', $user->id)
+                ->groupBy('tags.id', 'tags.tag')
+                ->orderByRaw('COUNT(*) desc')
+                ->limit(5)
+                ->get();
+
+            return $topTags->map(function ($tag) {
+                return [
+                    'name' => $tag->name,
+                    'count' => $tag->count
+                ];
+            })->toArray();
+        } catch (\Exception $e) {
+            // Return empty array if query fails
+            return [];
+        }
+    }
+
+    private function timeAgo($date): string
+    {
+        if (is_string($date)) {
+            $date = new \DateTime($date);
+        } elseif (!$date instanceof \DateTime) {
+            $date = new \DateTime($date);
+        }
+        
+        $now = new \DateTime();
+        $diff = $now->diff($date);
+
+        if ($diff->y > 0) {
+            return $diff->y . ' year' . ($diff->y > 1 ? 's' : '') . ' ago';
+        } elseif ($diff->m > 0) {
+            return $diff->m . ' month' . ($diff->m > 1 ? 's' : '') . ' ago';
+        } elseif ($diff->d > 0) {
+            return $diff->d . ' day' . ($diff->d > 1 ? 's' : '') . ' ago';
+        } elseif ($diff->h > 0) {
+            return $diff->h . ' hour' . ($diff->h > 1 ? 's' : '') . ' ago';
+        } elseif ($diff->i > 0) {
+            return $diff->i . ' minute' . ($diff->i > 1 ? 's' : '') . ' ago';
+        } else {
+            return 'just now';
         }
     }
 }

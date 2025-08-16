@@ -59,7 +59,7 @@
             <div class="form-group">
                 <label for="about">About:</label>
                 <textarea name="about" id="about" rows="4" placeholder="Tell us about yourself..."><?=$this->e($settings['about'])?></textarea>
-                <small>You can use plain text or basic HTML.</small>
+                <small>Supports Markdown formatting.</small>
             </div>
 
             <div class="form-group">

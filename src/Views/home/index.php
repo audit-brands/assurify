@@ -40,12 +40,15 @@
                         <?=$story['time_ago']?>
                         | <a href="/s/<?=$story['short_id']?>/<?=$story['slug']?>"><?=$story['comments_count']?> comments</a>
                         
+                        <?php if (isset($_SESSION['user_id']) && $_SESSION['user_id'] == $story['user_id'] && !($story['is_deleted'] ?? false)) : ?>
+                            | <a href="#" class="user-delete-link" data-story-id="<?=$story['short_id']?>" 
+                               onclick="return confirm('Are you sure you want to delete this story? This action cannot be undone.')">delete</a>
+                        <?php endif ?>
+                        
                         <?php if ($is_moderator ?? false) : ?>
-                            | <a href="/mod/stories/<?=$story['short_id']?>/edit" class="mod-link">edit</a>
+                            | <a href="/mod/stories/<?=$story['short_id']?>/edit" class="mod-link">mod edit</a>
                             <?php if ($story['is_deleted'] ?? false) : ?>
-                                | <a href="/mod/stories/<?=$story['short_id']?>/undelete" class="mod-link mod-undelete">undelete</a>
-                            <?php else : ?>
-                                | <a href="/mod/stories/<?=$story['short_id']?>/delete" class="mod-link mod-delete">delete</a>
+                                | <span class="mod-status deleted">deleted</span>
                             <?php endif ?>
                         <?php endif ?>
                     </div>
@@ -127,6 +130,41 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                 console.error('Error:', error);
                 alert('Failed to vote');
+            });
+        });
+    });
+
+    // Handle user story deletion
+    document.querySelectorAll('.user-delete-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const storyId = this.dataset.storyId;
+            
+            // Confirm deletion
+            if (!confirm('Are you sure you want to delete this story? This action cannot be undone.')) {
+                return;
+            }
+            
+            // Send DELETE request
+            fetch(`/stories/${storyId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Refresh the page to show updated list
+                    window.location.reload();
+                } else {
+                    alert('Error deleting story: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error deleting story. Please try again.');
             });
         });
     });

@@ -18,6 +18,7 @@ class User extends Model
         'is_moderator',
         'karma',
         'about',
+        'markeddown_about',
         'homepage',
         'github_username',
         'twitter_username',

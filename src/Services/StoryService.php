@@ -128,7 +128,7 @@ class StoryService
         }
     }
 
-    public function getStoriesForListing(string $sort = 'hot', int $limit = 25, int $offset = 0, array $excludeTagIds = []): array
+    public function getStoriesForListing(string $sort = 'hot', int $limit = 25, int $offset = 0, array $excludeTagIds = [], ?string $duration = null): array
     {
         try {
             $query = Story::where('is_deleted', false)
@@ -140,6 +140,14 @@ class StoryService
                 $query->whereDoesntHave('tags', function($tagQuery) use ($excludeTagIds) {
                     $tagQuery->whereIn('tag_id', $excludeTagIds);
                 });
+            }
+            
+            // Filter by duration if specified
+            if ($duration) {
+                $dateFrom = $this->parseDuration($duration);
+                if ($dateFrom) {
+                    $query->where('created_at', '>=', $dateFrom);
+                }
             }
 
             switch ($sort) {
@@ -181,9 +189,9 @@ class StoryService
         return $this->getStoriesForListing('newest', $limit);
     }
 
-    public function getTopStories(int $limit = 25): array
+    public function getTopStories(int $limit = 25, ?string $duration = null): array
     {
-        return $this->getStoriesForListing('top', $limit);
+        return $this->getStoriesForListing('top', $limit, 0, [], $duration);
     }
 
     public function getHotStories(int $limit = 25): array
@@ -443,6 +451,35 @@ class StoryService
 
         if (!empty($data['url']) && !filter_var($data['url'], FILTER_VALIDATE_URL)) {
             throw new \Exception('Invalid URL format');
+        }
+    }
+    
+    /**
+     * Parse duration string (1w, 2w, 3m, 3y, etc.) and return Carbon date
+     */
+    private function parseDuration(string $duration): ?Carbon
+    {
+        // Match pattern like 1d, 1w, 2w, 3m, 1y, etc.
+        if (!preg_match('/^(\d+)([dwmy])$/', $duration, $matches)) {
+            return null;
+        }
+        
+        $amount = (int) $matches[1];
+        $unit = $matches[2];
+        
+        $now = Carbon::now();
+        
+        switch ($unit) {
+            case 'd': // days
+                return $now->subDays($amount);
+            case 'w': // weeks
+                return $now->subWeeks($amount);
+            case 'm': // months
+                return $now->subMonths($amount);
+            case 'y': // years
+                return $now->subYears($amount);
+            default:
+                return null;
         }
     }
 }

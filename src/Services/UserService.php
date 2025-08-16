@@ -137,6 +137,7 @@ class UserService
             'is_moderator' => $user->is_moderator,
             'karma' => $user->karma,
             'about' => $user->about,
+            'markeddown_about' => $user->markeddown_about,
             'homepage' => $user->homepage,
             'github_username' => $user->github_username,
             'twitter_username' => $user->twitter_username,
@@ -288,6 +289,13 @@ class UserService
             // Profile information fields
             if (isset($settings['about'])) {
                 $userFields['about'] = $settings['about'];
+                
+                // Process markdown for about field
+                if (!empty($settings['about'])) {
+                    $userFields['markeddown_about'] = \Michelf\Markdown::defaultTransform($settings['about']);
+                } else {
+                    $userFields['markeddown_about'] = null;
+                }
             }
             if (isset($settings['homepage'])) {
                 $userFields['homepage'] = $settings['homepage'];
