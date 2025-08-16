@@ -191,6 +191,73 @@
                                 </div>
                             <?php endforeach ?>
                         </div>
+                        
+                        <!-- Modern Stories Pagination -->
+                        <?php if ($stories_pagination && $stories_pagination['total_pages'] > 1) : ?>
+                            <div class="modern-pagination">
+                                <?php
+                                $current = $stories_pagination['current_page'];
+                                $total = $stories_pagination['total_pages'];
+                                $baseUrl = $stories_pagination['base_url'];
+                                
+                                // Calculate page range to show
+                                $range = 2; // Show 2 pages on each side of current
+                                $start = max(1, $current - $range);
+                                $end = min($total, $current + $range);
+                                ?>
+                                
+                                <div class="pagination-info">
+                                    Page <?=$current?> of <?=$total?> (<?=$stories_pagination['total_stories']?> stories)
+                                </div>
+                                
+                                <div class="pagination-controls">
+                                    <!-- First Page -->
+                                    <?php if ($current > 1) : ?>
+                                        <a href="<?=$baseUrl?>&page=1" class="page-btn first" title="First page">‹‹</a>
+                                    <?php endif ?>
+                                    
+                                    <!-- Previous Page -->
+                                    <?php if ($stories_pagination['has_prev']) : ?>
+                                        <a href="<?=$baseUrl?>&page=<?=$current - 1?>" class="page-btn prev" title="Previous page">‹</a>
+                                    <?php endif ?>
+                                    
+                                    <!-- Left Ellipsis -->
+                                    <?php if ($start > 1) : ?>
+                                        <a href="<?=$baseUrl?>&page=1" class="page-btn">1</a>
+                                        <?php if ($start > 2) : ?>
+                                            <span class="page-ellipsis">…</span>
+                                        <?php endif ?>
+                                    <?php endif ?>
+                                    
+                                    <!-- Page Numbers -->
+                                    <?php for ($i = $start; $i <= $end; $i++) : ?>
+                                        <?php if ($i == $current) : ?>
+                                            <span class="page-btn current"><?=$i?></span>
+                                        <?php else : ?>
+                                            <a href="<?=$baseUrl?>&page=<?=$i?>" class="page-btn"><?=$i?></a>
+                                        <?php endif ?>
+                                    <?php endfor ?>
+                                    
+                                    <!-- Right Ellipsis -->
+                                    <?php if ($end < $total) : ?>
+                                        <?php if ($end < $total - 1) : ?>
+                                            <span class="page-ellipsis">…</span>
+                                        <?php endif ?>
+                                        <a href="<?=$baseUrl?>&page=<?=$total?>" class="page-btn"><?=$total?></a>
+                                    <?php endif ?>
+                                    
+                                    <!-- Next Page -->
+                                    <?php if ($stories_pagination['has_next']) : ?>
+                                        <a href="<?=$baseUrl?>&page=<?=$current + 1?>" class="page-btn next" title="Next page">›</a>
+                                    <?php endif ?>
+                                    
+                                    <!-- Last Page -->
+                                    <?php if ($current < $total) : ?>
+                                        <a href="<?=$baseUrl?>&page=<?=$total?>" class="page-btn last" title="Last page">››</a>
+                                    <?php endif ?>
+                                </div>
+                            </div>
+                        <?php endif ?>
                     <?php endif ?>
                 </div>
             
@@ -223,6 +290,73 @@
                                 </div>
                             <?php endforeach ?>
                         </div>
+                        
+                        <!-- Modern Comments Pagination -->
+                        <?php if ($comments_pagination && $comments_pagination['total_pages'] > 1) : ?>
+                            <div class="modern-pagination">
+                                <?php
+                                $current = $comments_pagination['current_page'];
+                                $total = $comments_pagination['total_pages'];
+                                $baseUrl = $comments_pagination['base_url'];
+                                
+                                // Calculate page range to show
+                                $range = 2; // Show 2 pages on each side of current
+                                $start = max(1, $current - $range);
+                                $end = min($total, $current + $range);
+                                ?>
+                                
+                                <div class="pagination-info">
+                                    Page <?=$current?> of <?=$total?> (<?=$comments_pagination['total_comments']?> comments)
+                                </div>
+                                
+                                <div class="pagination-controls">
+                                    <!-- First Page -->
+                                    <?php if ($current > 1) : ?>
+                                        <a href="<?=$baseUrl?>&page=1" class="page-btn first" title="First page">‹‹</a>
+                                    <?php endif ?>
+                                    
+                                    <!-- Previous Page -->
+                                    <?php if ($comments_pagination['has_prev']) : ?>
+                                        <a href="<?=$baseUrl?>&page=<?=$current - 1?>" class="page-btn prev" title="Previous page">‹</a>
+                                    <?php endif ?>
+                                    
+                                    <!-- Left Ellipsis -->
+                                    <?php if ($start > 1) : ?>
+                                        <a href="<?=$baseUrl?>&page=1" class="page-btn">1</a>
+                                        <?php if ($start > 2) : ?>
+                                            <span class="page-ellipsis">…</span>
+                                        <?php endif ?>
+                                    <?php endif ?>
+                                    
+                                    <!-- Page Numbers -->
+                                    <?php for ($i = $start; $i <= $end; $i++) : ?>
+                                        <?php if ($i == $current) : ?>
+                                            <span class="page-btn current"><?=$i?></span>
+                                        <?php else : ?>
+                                            <a href="<?=$baseUrl?>&page=<?=$i?>" class="page-btn"><?=$i?></a>
+                                        <?php endif ?>
+                                    <?php endfor ?>
+                                    
+                                    <!-- Right Ellipsis -->
+                                    <?php if ($end < $total) : ?>
+                                        <?php if ($end < $total - 1) : ?>
+                                            <span class="page-ellipsis">…</span>
+                                        <?php endif ?>
+                                        <a href="<?=$baseUrl?>&page=<?=$total?>" class="page-btn"><?=$total?></a>
+                                    <?php endif ?>
+                                    
+                                    <!-- Next Page -->
+                                    <?php if ($comments_pagination['has_next']) : ?>
+                                        <a href="<?=$baseUrl?>&page=<?=$current + 1?>" class="page-btn next" title="Next page">›</a>
+                                    <?php endif ?>
+                                    
+                                    <!-- Last Page -->
+                                    <?php if ($current < $total) : ?>
+                                        <a href="<?=$baseUrl?>&page=<?=$total?>" class="page-btn last" title="Last page">››</a>
+                                    <?php endif ?>
+                                </div>
+                            </div>
+                        <?php endif ?>
                     <?php endif ?>
                 </div>
             <?php elseif ($tab === 'threads') : ?>
@@ -289,6 +423,73 @@
                                 </div>
                             <?php endforeach ?>
                         </div>
+                        
+                        <!-- Modern Threads Pagination -->
+                        <?php if ($threads_pagination && $threads_pagination['total_pages'] > 1) : ?>
+                            <div class="modern-pagination">
+                                <?php
+                                $current = $threads_pagination['current_page'];
+                                $total = $threads_pagination['total_pages'];
+                                $baseUrl = $threads_pagination['base_url'];
+                                
+                                // Calculate page range to show
+                                $range = 2; // Show 2 pages on each side of current
+                                $start = max(1, $current - $range);
+                                $end = min($total, $current + $range);
+                                ?>
+                                
+                                <div class="pagination-info">
+                                    Page <?=$current?> of <?=$total?> (<?=$threads_pagination['total_threads']?> threads)
+                                </div>
+                                
+                                <div class="pagination-controls">
+                                    <!-- First Page -->
+                                    <?php if ($current > 1) : ?>
+                                        <a href="<?=$baseUrl?>&page=1" class="page-btn first" title="First page">‹‹</a>
+                                    <?php endif ?>
+                                    
+                                    <!-- Previous Page -->
+                                    <?php if ($threads_pagination['has_prev']) : ?>
+                                        <a href="<?=$baseUrl?>&page=<?=$current - 1?>" class="page-btn prev" title="Previous page">‹</a>
+                                    <?php endif ?>
+                                    
+                                    <!-- Left Ellipsis -->
+                                    <?php if ($start > 1) : ?>
+                                        <a href="<?=$baseUrl?>&page=1" class="page-btn">1</a>
+                                        <?php if ($start > 2) : ?>
+                                            <span class="page-ellipsis">…</span>
+                                        <?php endif ?>
+                                    <?php endif ?>
+                                    
+                                    <!-- Page Numbers -->
+                                    <?php for ($i = $start; $i <= $end; $i++) : ?>
+                                        <?php if ($i == $current) : ?>
+                                            <span class="page-btn current"><?=$i?></span>
+                                        <?php else : ?>
+                                            <a href="<?=$baseUrl?>&page=<?=$i?>" class="page-btn"><?=$i?></a>
+                                        <?php endif ?>
+                                    <?php endfor ?>
+                                    
+                                    <!-- Right Ellipsis -->
+                                    <?php if ($end < $total) : ?>
+                                        <?php if ($end < $total - 1) : ?>
+                                            <span class="page-ellipsis">…</span>
+                                        <?php endif ?>
+                                        <a href="<?=$baseUrl?>&page=<?=$total?>" class="page-btn"><?=$total?></a>
+                                    <?php endif ?>
+                                    
+                                    <!-- Next Page -->
+                                    <?php if ($threads_pagination['has_next']) : ?>
+                                        <a href="<?=$baseUrl?>&page=<?=$current + 1?>" class="page-btn next" title="Next page">›</a>
+                                    <?php endif ?>
+                                    
+                                    <!-- Last Page -->
+                                    <?php if ($current < $total) : ?>
+                                        <a href="<?=$baseUrl?>&page=<?=$total?>" class="page-btn last" title="Last page">››</a>
+                                    <?php endif ?>
+                                </div>
+                            </div>
+                        <?php endif ?>
                     <?php endif ?>
                 </div>
             
@@ -322,6 +523,73 @@
                                 </div>
                             <?php endforeach ?>
                         </div>
+                        
+                        <!-- Modern Saved Stories Pagination -->
+                        <?php if ($saved_pagination && $saved_pagination['total_pages'] > 1) : ?>
+                            <div class="modern-pagination">
+                                <?php
+                                $current = $saved_pagination['current_page'];
+                                $total = $saved_pagination['total_pages'];
+                                $baseUrl = $saved_pagination['base_url'];
+                                
+                                // Calculate page range to show
+                                $range = 2; // Show 2 pages on each side of current
+                                $start = max(1, $current - $range);
+                                $end = min($total, $current + $range);
+                                ?>
+                                
+                                <div class="pagination-info">
+                                    Page <?=$current?> of <?=$total?> (<?=$saved_pagination['total_stories']?> saved stories)
+                                </div>
+                                
+                                <div class="pagination-controls">
+                                    <!-- First Page -->
+                                    <?php if ($current > 1) : ?>
+                                        <a href="<?=$baseUrl?>&page=1" class="page-btn first" title="First page">‹‹</a>
+                                    <?php endif ?>
+                                    
+                                    <!-- Previous Page -->
+                                    <?php if ($saved_pagination['has_prev']) : ?>
+                                        <a href="<?=$baseUrl?>&page=<?=$current - 1?>" class="page-btn prev" title="Previous page">‹</a>
+                                    <?php endif ?>
+                                    
+                                    <!-- Left Ellipsis -->
+                                    <?php if ($start > 1) : ?>
+                                        <a href="<?=$baseUrl?>&page=1" class="page-btn">1</a>
+                                        <?php if ($start > 2) : ?>
+                                            <span class="page-ellipsis">…</span>
+                                        <?php endif ?>
+                                    <?php endif ?>
+                                    
+                                    <!-- Page Numbers -->
+                                    <?php for ($i = $start; $i <= $end; $i++) : ?>
+                                        <?php if ($i == $current) : ?>
+                                            <span class="page-btn current"><?=$i?></span>
+                                        <?php else : ?>
+                                            <a href="<?=$baseUrl?>&page=<?=$i?>" class="page-btn"><?=$i?></a>
+                                        <?php endif ?>
+                                    <?php endfor ?>
+                                    
+                                    <!-- Right Ellipsis -->
+                                    <?php if ($end < $total) : ?>
+                                        <?php if ($end < $total - 1) : ?>
+                                            <span class="page-ellipsis">…</span>
+                                        <?php endif ?>
+                                        <a href="<?=$baseUrl?>&page=<?=$total?>" class="page-btn"><?=$total?></a>
+                                    <?php endif ?>
+                                    
+                                    <!-- Next Page -->
+                                    <?php if ($saved_pagination['has_next']) : ?>
+                                        <a href="<?=$baseUrl?>&page=<?=$current + 1?>" class="page-btn next" title="Next page">›</a>
+                                    <?php endif ?>
+                                    
+                                    <!-- Last Page -->
+                                    <?php if ($current < $total) : ?>
+                                        <a href="<?=$baseUrl?>&page=<?=$total?>" class="page-btn last" title="Last page">››</a>
+                                    <?php endif ?>
+                                </div>
+                            </div>
+                        <?php endif ?>
                     <?php endif ?>
                 </div>
             <?php endif ?>
@@ -643,6 +911,114 @@
     font-size: 0.95em;
 }
 
+/* Comments Pagination */
+.comments-section .pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 30px;
+    padding: 20px 0;
+    border-top: 1px solid var(--color-fg-contrast-5);
+}
+
+.comments-section .page-link {
+    padding: 8px 15px;
+    background: var(--color-accent);
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+
+.comments-section .page-link:hover {
+    background: #cc3333;
+}
+
+.comments-section .page-info {
+    color: var(--color-fg-contrast-7-5);
+    font-size: 0.9em;
+}
+
+/* Modern Pagination Component */
+.modern-pagination {
+    margin-top: 30px;
+    padding: 20px 0;
+    border-top: 1px solid var(--color-fg-contrast-5);
+    text-align: center;
+}
+
+.pagination-info {
+    color: var(--color-fg-contrast-7-5);
+    font-size: 0.9em;
+    margin-bottom: 15px;
+}
+
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 12px;
+    background: var(--color-bg-secondary, rgba(255, 255, 255, 0.05));
+    color: var(--color-fg-contrast-10);
+    text-decoration: none;
+    border: 1px solid var(--color-fg-contrast-5);
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 0.9em;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.page-btn:hover {
+    background: var(--color-accent);
+    color: white;
+    border-color: var(--color-accent);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.page-btn.current {
+    background: var(--color-accent);
+    color: white;
+    border-color: var(--color-accent);
+    cursor: default;
+    font-weight: 600;
+}
+
+.page-btn.first,
+.page-btn.last {
+    font-weight: bold;
+    background: var(--color-bg-tertiary, rgba(255, 255, 255, 0.1));
+}
+
+.page-btn.prev,
+.page-btn.next {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.page-ellipsis {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    color: var(--color-fg-contrast-7-5);
+    font-weight: bold;
+    cursor: default;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .user-basic-info {
@@ -663,6 +1039,23 @@
     
     .thread-header {
         flex-wrap: wrap;
+    }
+    
+    /* Modern pagination mobile styles */
+    .pagination-controls {
+        gap: 4px;
+    }
+    
+    .page-btn {
+        min-width: 32px;
+        height: 32px;
+        padding: 0 8px;
+        font-size: 0.8em;
+    }
+    
+    .page-ellipsis {
+        min-width: 20px;
+        height: 32px;
     }
 }
 </style>

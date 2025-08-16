@@ -29,12 +29,13 @@ use Slim\App;
 use Slim\Routing\RouteCollectorProxy;
 
 // Home routes
-$app->get('/', [HomeController::class, 'index']);
-$app->get('/active', [HomeController::class, 'index']); // Active = same as home (hot stories)
-$app->get('/recent', [HomeController::class, 'recent']);
-$app->get('/newest', [HomeController::class, 'newest']);
-$app->get('/top', [HomeController::class, 'top']);
-$app->get('/top/{duration}', [HomeController::class, 'top']);
+$app->get('/', [HomeController::class, 'index']); // Home - score-based ranking
+$app->get('/hot', [HomeController::class, 'hot']); // Hot - explicit popularity view
+$app->get('/active', [HomeController::class, 'active']); // Active - recent discussion activity
+$app->get('/recent', [HomeController::class, 'recent']); // Recent - last 14 days
+$app->get('/newest', [HomeController::class, 'newest']); // Newest - chronological
+$app->get('/top', [HomeController::class, 'top']); // Top stories
+$app->get('/top/{duration}', [HomeController::class, 'top']); // Top with duration
 $app->get('/comments', [CommentController::class, 'index']);
 
 // Story routes

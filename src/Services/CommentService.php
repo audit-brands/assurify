@@ -105,8 +105,9 @@ class CommentService
                 $this->castVote($comment, $user, 1);
             }
 
-            // Update story comment count
+            // Update story comment count and last comment timestamp
             $this->updateStoryCommentCount($story);
+            $this->updateStoryLastComment($story);
         } catch (\Exception $e) {
             // Log the error but don't fail the comment creation
             error_log("Post-comment creation operations failed: " . $e->getMessage());
@@ -315,6 +316,25 @@ class CommentService
         $story->save();
     }
 
+    private function updateStoryLastComment(Story $story): void
+    {
+        // Get the most recent comment timestamp for this story
+        $lastComment = Comment::where('story_id', $story->id)
+                             ->where('is_deleted', false)
+                             ->where('is_moderated', false)
+                             ->orderBy('created_at', 'desc')
+                             ->first();
+
+        if ($lastComment) {
+            $story->last_comment_at = $lastComment->created_at;
+        } else {
+            // If no comments exist, use story creation time
+            $story->last_comment_at = $story->created_at;
+        }
+        
+        $story->save();
+    }
+
 
     public function getCommentByShortId(string $shortId): ?Comment
     {
@@ -339,10 +359,11 @@ class CommentService
         $comment->markeddown_comment = '<p>[deleted]</p>';
         $comment->save();
 
-        // Update story comment count
+        // Update story comment count and last comment timestamp
         $story = Story::find($comment->story_id);
         if ($story) {
             $this->updateStoryCommentCount($story);
+            $this->updateStoryLastComment($story);
         }
 
         return true;

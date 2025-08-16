@@ -48,8 +48,11 @@
             <div class="navholder">
                 <nav class="links">
                     <a href="/" id="logo"><span class="logo-text">Assurify</span></a>
-                    <a href="/active"<?= ($_SERVER['REQUEST_URI'] === '/active' || $_SERVER['REQUEST_URI'] === '/') ? ' class="current_page"' : '' ?>>Active</a>
+                    <a href="/"<?= ($_SERVER['REQUEST_URI'] === '/') ? ' class="current_page"' : '' ?>>Home</a>
+                    <a href="/active"<?= ($_SERVER['REQUEST_URI'] === '/active') ? ' class="current_page"' : '' ?>>Active</a>
                     <a href="/recent"<?= ($_SERVER['REQUEST_URI'] === '/recent') ? ' class="current_page"' : '' ?>>Recent</a>
+                    <a href="/newest"<?= ($_SERVER['REQUEST_URI'] === '/newest') ? ' class="current_page"' : '' ?>>Newest</a>
+                    <a href="/top/1w"<?= (strpos($_SERVER['REQUEST_URI'], '/top') === 0) ? ' class="current_page"' : '' ?>>Top</a>
                     <a href="/comments"<?= ($_SERVER['REQUEST_URI'] === '/comments') ? ' class="current_page"' : '' ?>>Comments</a>
                     <a href="/search"<?= ($_SERVER['REQUEST_URI'] === '/search') ? ' class="current_page"' : '' ?>>Search</a>
                 </nav>

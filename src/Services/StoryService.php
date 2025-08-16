@@ -58,6 +58,7 @@ class StoryService
         $story->created_at = date('Y-m-d H:i:s');
         $story->updated_at = date('Y-m-d H:i:s');
         $story->last_edited_at = date('Y-m-d H:i:s');
+        $story->last_comment_at = date('Y-m-d H:i:s'); // Initialize to story creation time
 
         // Process markdown for description
         if ($story->description) {
@@ -155,7 +156,13 @@ class StoryService
                     $query->orderBy('created_at', 'desc');
                     break;
                 case 'recent':
-                    $query->orderBy('updated_at', 'desc');
+                    // Filter to last 14 days for recent view
+                    $twoWeeksAgo = Carbon::now()->subDays(14);
+                    $query->where('created_at', '>=', $twoWeeksAgo)
+                          ->orderBy('created_at', 'desc');
+                    break;
+                case 'active':
+                    $query->orderBy('last_comment_at', 'desc');
                     break;
                 case 'top':
                     $query->orderBy('score', 'desc')
@@ -197,6 +204,11 @@ class StoryService
     public function getHotStories(int $limit = 25): array
     {
         return $this->getStoriesForListing('hot', $limit);
+    }
+
+    public function getActiveStories(int $limit = 25): array
+    {
+        return $this->getStoriesForListing('active', $limit);
     }
 
     public function getStories(int $limit = 25, int $offset = 0, string $sort = 'hot', array $excludeTagIds = []): array

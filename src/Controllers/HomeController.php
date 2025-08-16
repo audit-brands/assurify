@@ -53,12 +53,9 @@ class HomeController extends BaseController
             unset($_SESSION['story_success']); // Clear after showing
         }
 
-        // Check if this is the /active route to set appropriate title
-        $path = $request->getUri()->getPath();
-        $title = ($path === '/active') ? 'Active | Assurify' : 'Assurify';
-        
-        // Set section header - both homepage and /active should show "Active Stories"
-        $sectionHeader = 'Active Stories';
+        // Home page shows hot/popular stories, not active discussion
+        $title = 'Assurify';
+        $sectionHeader = 'Hot Stories';
 
         // Calculate pagination data
         $totalPages = (int) ceil($totalStories / $perPage);
@@ -67,7 +64,7 @@ class HomeController extends BaseController
             'total_pages' => $totalPages,
             'has_prev' => $page > 1,
             'has_next' => $page < $totalPages,
-            'base_url' => ($path === '/active') ? '/active' : '/'
+            'base_url' => '/'
         ];
 
         return $this->render($response, 'home/index', [
@@ -75,6 +72,98 @@ class HomeController extends BaseController
             'section_header' => $sectionHeader,
             'stories' => $stories,
             'success' => $success,
+            'pagination' => $pagination,
+            'is_moderator' => $isModerator
+        ]);
+    }
+
+    public function hot(Request $request, Response $response): Response
+    {
+        // Hot view - identical to index but explicit about being popularity-based
+        $page = (int) ($request->getQueryParams()['page'] ?? 1);
+        if ($page < 1) $page = 1;
+        
+        $perPage = 25;
+        $offset = ($page - 1) * $perPage;
+        
+        try {
+            // Get user and filtered tags
+            $user = null;
+            $isModerator = false;
+            if (isset($_SESSION['user_id'])) {
+                $user = \App\Models\User::find($_SESSION['user_id']);
+                $isModerator = $user && ($user->is_admin || $user->is_moderator);
+            }
+            $excludeTagIds = $this->getFilteredTagIds($user);
+            
+            // Get hot stories (score-based ranking)
+            $stories = $this->storyService->getStoriesForListing('hot', $perPage, $offset, $excludeTagIds);
+            $totalStories = $this->storyService->getTotalStories($excludeTagIds);
+        } catch (\Exception $e) {
+            $stories = [];
+            $totalStories = 0;
+        }
+
+        // Calculate pagination data
+        $totalPages = (int) ceil($totalStories / $perPage);
+        $pagination = [
+            'current_page' => $page,
+            'total_pages' => $totalPages,
+            'has_prev' => $page > 1,
+            'has_next' => $page < $totalPages,
+            'base_url' => '/hot'
+        ];
+
+        return $this->render($response, 'home/index', [
+            'title' => 'Hot | Assurify',
+            'section_header' => 'Hot Stories',
+            'stories' => $stories,
+            'pagination' => $pagination,
+            'is_moderator' => $isModerator
+        ]);
+    }
+
+    public function active(Request $request, Response $response): Response
+    {
+        // Active view - stories with recent discussion activity
+        $page = (int) ($request->getQueryParams()['page'] ?? 1);
+        if ($page < 1) $page = 1;
+        
+        $perPage = 25;
+        $offset = ($page - 1) * $perPage;
+        
+        try {
+            // Get user and filtered tags
+            $user = null;
+            $isModerator = false;
+            if (isset($_SESSION['user_id'])) {
+                $user = \App\Models\User::find($_SESSION['user_id']);
+                $isModerator = $user && ($user->is_admin || $user->is_moderator);
+            }
+            $excludeTagIds = $this->getFilteredTagIds($user);
+            
+            // Get active stories (last comment activity based)
+            $stories = $this->storyService->getStoriesForListing('active', $perPage, $offset, $excludeTagIds);
+            $totalStories = $this->storyService->getTotalStories($excludeTagIds);
+        } catch (\Exception $e) {
+            $stories = [];
+            $totalStories = 0;
+        }
+
+        // Calculate pagination data
+        $totalPages = (int) ceil($totalStories / $perPage);
+        $pagination = [
+            'current_page' => $page,
+            'total_pages' => $totalPages,
+            'has_prev' => $page > 1,
+            'has_next' => $page < $totalPages,
+            'base_url' => '/active'
+        ];
+
+        return $this->render($response, 'home/index', [
+            'title' => 'Active | Assurify',
+            'section_header' => 'Active Stories',
+            'stories' => $stories,
             'pagination' => $pagination,
             'is_moderator' => $isModerator
         ]);

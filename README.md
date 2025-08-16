@@ -83,6 +83,56 @@
 docker-compose up -d
 ```
 
+## 📰 Story Views & Navigation
+
+Assurify provides multiple curated views for discovering and engaging with content, each designed for different browsing patterns and user needs:
+
+### 🏠 **Home** (`/`)
+The main landing page featuring **score-based ranking** of stories. Stories are sorted by popularity (upvotes) with recent submissions given priority. This provides a balanced view of both popular and fresh content, making it ideal for users who want to see what the community values most.
+
+**Sorting Algorithm**: `ORDER BY score DESC, created_at DESC`
+
+### 🔥 **Hot** (`/hot`) 
+An explicit **popularity-focused view** identical to Home, available as a direct route but not displayed in main navigation. This provides programmatic access to the same hot stories algorithm.
+
+**Sorting Algorithm**: `ORDER BY score DESC, created_at DESC`
+
+### ⚡ **Active** (`/active`)
+Shows stories with **recent discussion activity**, highlighting conversations that are happening right now. This view is perfect for users who want to jump into ongoing discussions and see what topics are generating engagement, regardless of the story's original score.
+
+**Sorting Algorithm**: `ORDER BY last_comment_at DESC`
+
+### 🆕 **Recent** (`/recent`)
+Displays **new submissions from the past 14 days**, ordered chronologically. Unlike other views, this includes all recent stories regardless of their popularity, making it ideal for discovering fresh content and ensuring new submissions get visibility. This view helps maintain community engagement with emerging topics.
+
+**Sorting Algorithm**: `ORDER BY created_at DESC` (filtered to last 14 days)
+
+### ⭐ **Newest** (`/newest`)
+Pure **chronological listing** of all stories by submission time. This view provides the most recent submissions first and is essential for moderators, active community members, and users who want to see everything as it's submitted without any popularity or activity filtering.
+
+**Sorting Algorithm**: `ORDER BY created_at DESC`
+
+### 🏆 **Top** (`/top/{duration}`)
+**Time-filtered popularity rankings** showing the highest-scored stories within specific time periods. Users can view top stories from the past day, week, month, or year, making it easy to discover the best content from any time period.
+
+**Available Durations**: 
+- Days: `1d` to `90d` (e.g., `/top/7d` for past week)
+- Weeks: `1w` to `52w` (e.g., `/top/1w` for past week)  
+- Months: `1m` to `24m` (e.g., `/top/1m` for past month)
+- Years: `1y` to `10y` (e.g., `/top/1y` for past year)
+
+**Sorting Algorithm**: `ORDER BY score DESC, created_at DESC` (within date range)
+
+### 🎯 **Navigation Design Philosophy**
+
+The main navigation (`Home | Active | Recent | Newest | Top`) serves different user behaviors:
+- **Casual browsers**: Home for quality content  
+- **Active participants**: Active for joining ongoing discussions  
+- **Content discoverers**: Recent and Newest for fresh submissions
+- **Archival exploration**: Top for historical best content
+
+Each view respects user tag preferences and filtering settings, ensuring a personalized experience while maintaining the distinct character of each browsing mode. The Hot route remains available for direct access but is not featured in navigation to avoid redundancy with Home.
+
 ## 🔧 Configuration
 
 ### Security Configuration

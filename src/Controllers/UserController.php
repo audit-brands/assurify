@@ -48,6 +48,58 @@ class UserController extends BaseController
         $this->userService->updateUserKarma($user);
         $userProfile['karma'] = $user->fresh()->karma;
 
+        // Handle stories tab pagination
+        $storiesPagination = null;
+        if ($tab === 'stories') {
+            $page = max(1, (int) ($request->getQueryParams()['page'] ?? 1));
+            $perPage = 10;
+            $offset = ($page - 1) * $perPage;
+            
+            // Get paginated stories for this user
+            $paginatedStories = \App\Models\Story::with(['tags'])
+                ->where('user_id', $user->id)
+                ->where('is_deleted', false)
+                ->orderBy('created_at', 'desc')
+                ->offset($offset)
+                ->limit($perPage)
+                ->get()
+                ->map(function ($story) use ($viewer) {
+                    return [
+                        'id' => $story->id,
+                        'short_id' => $story->short_id,
+                        'title' => $story->title,
+                        'score' => $story->score,
+                        'comments_count' => $story->comments_count ?? 0,
+                        'created_at' => $story->created_at,
+                        'time_ago' => $this->timeAgo($story->created_at),
+                        'slug' => $this->generateSlug($story->title),
+                        'domain' => $this->extractDomain($story->url ?? ''),
+                        'url' => $story->url,
+                        'can_edit' => $viewer ? ($viewer->id === $story->user_id || $viewer->is_admin) : false
+                    ];
+                })
+                ->toArray();
+            
+            // Get total stories count for pagination
+            $totalStories = \App\Models\Story::where('user_id', $user->id)
+                ->where('is_deleted', false)
+                ->count();
+            
+            $totalPages = (int) ceil($totalStories / $perPage);
+            
+            $storiesPagination = [
+                'current_page' => $page,
+                'total_pages' => $totalPages,
+                'total_stories' => $totalStories,
+                'has_prev' => $page > 1,
+                'has_next' => $page < $totalPages,
+                'base_url' => "/u/{$username}?tab=stories"
+            ];
+            
+            // Override the recent_stories with paginated data
+            $userProfile['stats']['recent_stories'] = $paginatedStories;
+        }
+
         // Handle saved tab - check access permissions
         $savedStories = [];
         if ($tab === 'saved') {
@@ -64,19 +116,111 @@ class UserController extends BaseController
                 ]);
             }
 
-            // Get saved stories
+            // Get saved stories with pagination
+            $page = max(1, (int) ($request->getQueryParams()['page'] ?? 1));
+            $perPage = 10;
+            $offset = ($page - 1) * $perPage;
+            
             $savedStoriesData = $user->savedStories()
                                     ->with(['story'])
                                     ->orderBy('created_at', 'desc')
+                                    ->offset($offset)
+                                    ->limit($perPage)
                                     ->get()
                                     ->pluck('story');
             $savedStories = $this->formatStoriesForView($savedStoriesData);
+            
+            // Get total saved stories count for pagination
+            $totalSavedStories = $user->savedStories()->count();
+            $totalPages = (int) ceil($totalSavedStories / $perPage);
+            
+            $savedPagination = [
+                'current_page' => $page,
+                'total_pages' => $totalPages,
+                'total_stories' => $totalSavedStories,
+                'has_prev' => $page > 1,
+                'has_next' => $page < $totalPages,
+                'base_url' => "/u/{$username}?tab=saved"
+            ];
         }
 
-        // Get user threads for threads tab
+        // Handle comments tab pagination
+        $commentsPagination = null;
+        if ($tab === 'comments') {
+            $page = max(1, (int) ($request->getQueryParams()['page'] ?? 1));
+            $perPage = 10;
+            $offset = ($page - 1) * $perPage;
+            
+            // Get paginated comments for this user
+            $paginatedComments = \App\Models\Comment::with(['story'])
+                ->where('user_id', $user->id)
+                ->where('is_deleted', false)
+                ->orderBy('created_at', 'desc')
+                ->offset($offset)
+                ->limit($perPage)
+                ->get()
+                ->map(function ($comment) {
+                    return [
+                        'id' => $comment->id,
+                        'short_id' => $comment->short_id,
+                        'comment' => $comment->comment,
+                        'markeddown_comment' => $comment->markeddown_comment,
+                        'score' => $comment->score,
+                        'created_at' => $comment->created_at,
+                        'time_ago' => $this->timeAgo($comment->created_at),
+                        'story_title' => $comment->story->title ?? 'Unknown',
+                        'story_short_id' => $comment->story->short_id ?? '',
+                        'story_slug' => $this->generateSlug($comment->story->title ?? 'unknown')
+                    ];
+                })
+                ->toArray();
+            
+            // Get total comments count for pagination
+            $totalComments = \App\Models\Comment::where('user_id', $user->id)
+                ->where('is_deleted', false)
+                ->count();
+            
+            $totalPages = (int) ceil($totalComments / $perPage);
+            
+            $commentsPagination = [
+                'current_page' => $page,
+                'total_pages' => $totalPages,
+                'total_comments' => $totalComments,
+                'has_prev' => $page > 1,
+                'has_next' => $page < $totalPages,
+                'base_url' => "/u/{$username}?tab=comments"
+            ];
+            
+            // Override the recent_comments with paginated data
+            $userProfile['stats']['recent_comments'] = $paginatedComments;
+        }
+
+        // Handle threads tab pagination
         $userThreads = [];
+        $threadsPagination = null;
         if ($tab === 'threads') {
-            $userThreads = $this->getUserThreads($user);
+            $page = max(1, (int) ($request->getQueryParams()['page'] ?? 1));
+            $perPage = 10;
+            $offset = ($page - 1) * $perPage;
+            
+            // Get paginated threads for this user
+            $userThreads = $this->getUserThreads($user, $perPage, $offset);
+            
+            // Get total threads count for pagination
+            $totalThreads = \App\Models\Comment::where('user_id', $user->id)
+                ->where('is_deleted', false)
+                ->count();
+            
+            $totalPages = (int) ceil($totalThreads / $perPage);
+            
+            $threadsPagination = [
+                'current_page' => $page,
+                'total_pages' => $totalPages,
+                'total_threads' => $totalThreads,
+                'has_prev' => $page > 1,
+                'has_next' => $page < $totalPages,
+                'base_url' => "/u/{$username}?tab=threads"
+            ];
         }
 
         // Get user's top tags for the status section
@@ -88,6 +232,10 @@ class UserController extends BaseController
             'tab' => $tab,
             'saved_stories' => $savedStories,
             'user_threads' => $userThreads,
+            'stories_pagination' => $storiesPagination ?? null,
+            'comments_pagination' => $commentsPagination,
+            'threads_pagination' => $threadsPagination,
+            'saved_pagination' => $savedPagination ?? null,
             'current_user_id' => $_SESSION['user_id'] ?? null
         ]);
     }
@@ -255,7 +403,7 @@ class UserController extends BaseController
     {
         $username = $args['username'];
         $page = max(1, (int) ($request->getQueryParams()['page'] ?? 1));
-        $perPage = 25;
+        $perPage = 10;
         
         // Get the user
         $user = $this->userService->getUserByUsername($username);
@@ -503,14 +651,15 @@ class UserController extends BaseController
         }
     }
 
-    private function getUserThreads(User $user): array
+    private function getUserThreads(User $user, int $perPage = 20, int $offset = 0): array
     {
         // Get user's comments with replies to create threaded conversations
         $comments = \App\Models\Comment::with(['story', 'replies.user'])
             ->where('user_id', $user->id)
             ->where('is_deleted', false)
             ->orderBy('created_at', 'desc')
-            ->limit(20)
+            ->offset($offset)
+            ->limit($perPage)
             ->get();
 
         $threads = [];
