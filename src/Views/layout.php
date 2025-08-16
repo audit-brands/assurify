@@ -61,6 +61,30 @@
                 <a href="/messages" id="messages-link">Messages</a>
                 <a href="/settings">Settings</a>
                 <a href="/invitations">Invitations</a>
+                <?php 
+                // Check if user is moderator/admin - fallback to database if session vars not set
+                $isModerator = $_SESSION['is_moderator'] ?? false;
+                $isAdmin = $_SESSION['is_admin'] ?? false;
+                
+                if (!$isModerator && !$isAdmin && isset($_SESSION['user_id'])) {
+                    try {
+                        $user = \App\Models\User::find($_SESSION['user_id']);
+                        if ($user) {
+                            $isModerator = $user->is_moderator ?? false;
+                            $isAdmin = $user->is_admin ?? false;
+                            
+                            // Update session with current values
+                            $_SESSION['is_moderator'] = $isModerator;
+                            $_SESSION['is_admin'] = $isAdmin;
+                        }
+                    } catch (\Exception $e) {
+                        // Ignore database errors
+                    }
+                }
+                ?>
+                <?php if ($isModerator || $isAdmin) : ?>
+                    <a href="/mod">Moderation</a>
+                <?php endif ?>
                 <a href="/stories">Submit</a>
                 <form action="/auth/logout" method="post" style="display: inline;">
                     <input type="submit" value="Logout" class="link-button">
@@ -81,6 +105,7 @@
                 <a href="/tags">Tags</a>
                 <a href="/filter">Filter</a>
                 <a href="/moderations">Moderation Log</a>
+                <a href="/users">Users</a>
             </nav>
         </footer>
     </div>

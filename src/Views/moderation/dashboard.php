@@ -44,9 +44,9 @@
     <div class="mod-navigation">
         <h2>Quick Actions</h2>
         <div class="nav-links">
-            <a href="/moderation/flagged" class="mod-link">View Flagged Content</a>
-            <a href="/moderation/log" class="mod-link">Moderation Log</a>
-            <a href="/moderation/users" class="mod-link">User Management</a>
+            <a href="/mod/flagged" class="mod-link">View Flagged Content</a>
+            <a href="/moderations" class="mod-link">Moderation Log</a>
+            <a href="/users" class="mod-link">User Management</a>
         </div>
     </div>
     
@@ -126,6 +126,14 @@
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
+    background: var(--color-bg);
+    color: var(--color-fg);
+}
+
+.moderation-dashboard h1,
+.moderation-dashboard h2,
+.moderation-dashboard h3 {
+    color: var(--color-fg);
 }
 
 .stats-grid {
@@ -136,24 +144,30 @@
 }
 
 .stat-box {
-    background: #f5f5f5;
+    background: rgba(255, 255, 255, 0.05);
     padding: 20px;
     text-align: center;
     border-radius: 5px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-fg-contrast-5);
+    transition: all 0.2s ease;
+}
+
+.stat-box:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--color-fg-contrast-7-5);
 }
 
 .stat-number {
     display: block;
     font-size: 24px;
     font-weight: bold;
-    color: #333;
+    color: var(--color-fg);
 }
 
 .stat-label {
     display: block;
     font-size: 14px;
-    color: #666;
+    color: var(--color-fg-contrast-7-5);
     margin-top: 5px;
 }
 
@@ -161,26 +175,33 @@
     display: flex;
     gap: 15px;
     margin-bottom: 30px;
+    flex-wrap: wrap;
 }
 
 .mod-link {
-    padding: 10px 20px;
-    background: #007cba;
+    background-color: var(--color-accent);
+    border: 1px solid var(--color-accent-dark);
     color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
     text-decoration: none;
-    border-radius: 5px;
+    display: inline-block;
+    font-weight: bold;
+    margin: 0 0.25rem;
 }
 
 .mod-link:hover {
-    background: #005a87;
+    background-color: var(--color-accent-hover);
+    text-decoration: none;
 }
 
 .flagged-item {
-    background: #fff;
-    border: 1px solid #ddd;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--color-fg-contrast-5);
     border-radius: 5px;
     padding: 15px;
     margin-bottom: 15px;
+    border-left: 4px solid var(--color-accent);
 }
 
 .item-header {
@@ -193,87 +214,127 @@
 .item-header h4 {
     margin: 0;
     flex: 1;
+    color: var(--color-fg);
+}
+
+.item-header h4 a {
+    color: var(--color-fg-link);
+    text-decoration: none;
+}
+
+.item-header h4 a:hover {
+    color: var(--color-fg-link-hover);
+    text-decoration: underline;
 }
 
 .score {
-    padding: 2px 8px;
+    padding: 4px 8px;
     border-radius: 3px;
     font-weight: bold;
-    font-size: 12px;
+    font-size: 0.9em;
+    white-space: nowrap;
 }
 
 .score-positive {
-    background: #d4edda;
-    color: #155724;
+    background: rgba(40, 167, 69, 0.2);
+    color: #4caf50;
+    border: 1px solid #4caf50;
 }
 
 .score-negative {
-    background: #f8d7da;
-    color: #721c24;
+    background: rgba(255, 68, 68, 0.2);
+    color: var(--color-accent);
+    border: 1px solid var(--color-accent);
 }
 
 .item-meta {
     font-size: 14px;
-    color: #666;
+    color: var(--color-fg-contrast-7-5);
     margin-bottom: 10px;
 }
 
+.item-meta a {
+    color: var(--color-fg-link);
+    text-decoration: none;
+}
+
+.item-meta a:hover {
+    color: var(--color-fg-link-hover);
+    text-decoration: underline;
+}
+
 .flag-indicator {
-    background: #dc3545;
-    color: white;
+    background: var(--color-accent);
+    color: var(--color-bg);
     padding: 2px 6px;
     border-radius: 3px;
-    font-size: 11px;
+    font-size: 0.8em;
     font-weight: bold;
 }
 
 .flag-reason {
     font-style: italic;
     margin-left: 10px;
+    color: var(--color-accent);
 }
 
 .item-excerpt {
     margin-bottom: 15px;
-    color: #555;
+    color: var(--color-fg-contrast-10);
+    line-height: 1.4;
 }
 
 .mod-actions {
     display: flex;
     gap: 10px;
+    flex-wrap: wrap;
 }
 
 .mod-btn {
-    padding: 5px 15px;
+    padding: 6px 12px;
     border: none;
     border-radius: 3px;
     cursor: pointer;
-    font-size: 12px;
+    font-size: 0.85em;
+    transition: all 0.2s ease;
+    font-family: inherit;
 }
 
 .mod-btn.approve {
-    background: #28a745;
-    color: white;
+    background: #4caf50;
+    color: var(--color-bg);
+}
+
+.mod-btn.approve:hover {
+    background: #66bb6a;
 }
 
 .mod-btn.flag {
-    background: #ffc107;
-    color: #212529;
+    background: #ffa726;
+    color: var(--color-bg);
+}
+
+.mod-btn.flag:hover {
+    background: #ffb74d;
 }
 
 .mod-btn.delete {
-    background: #dc3545;
-    color: white;
+    background: var(--color-accent);
+    color: var(--color-bg);
 }
 
-.mod-btn:hover {
-    opacity: 0.8;
+.mod-btn.delete:hover {
+    background: var(--color-accent-hover);
 }
 
 .no-content {
     text-align: center;
-    color: #666;
+    color: var(--color-fg-contrast-7-5);
     font-style: italic;
-    padding: 40px;
+    padding: 60px 20px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 5px;
+    border: 1px solid var(--color-fg-contrast-5);
 }
 </style>
 
@@ -297,7 +358,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            fetch(`/moderation/${type}s/${id}`, {
+            fetch(`/mod/${type}s/${id}/moderate`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'

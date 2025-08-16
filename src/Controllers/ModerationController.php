@@ -9,20 +9,21 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use League\Plates\Engine;
 
-class ModerationController extends BaseController
+class ModerationController extends ModController
 {
-    public function __construct(
-        Engine $templates,
-        private ModerationService $moderationService
-    ) {
+    private ModerationService $moderationService;
+
+    public function __construct(Engine $templates, ModerationService $moderationService)
+    {
         parent::__construct($templates);
+        $this->moderationService = $moderationService;
     }
 
     public function dashboard(Request $request, Response $response): Response
     {
         // Check if user is moderator
         if (!$this->requireModerator()) {
-            return $this->render($response, 'errors/forbidden', [
+            return $this->render($response, 'errors/403', [
                 'title' => 'Access Denied | Lobsters'
             ])->withStatus(403);
         }
@@ -43,7 +44,7 @@ class ModerationController extends BaseController
     public function flaggedContent(Request $request, Response $response): Response
     {
         if (!$this->requireModerator()) {
-            return $this->render($response, 'errors/forbidden', [
+            return $this->render($response, 'errors/403', [
                 'title' => 'Access Denied | Lobsters'
             ])->withStatus(403);
         }
@@ -51,14 +52,25 @@ class ModerationController extends BaseController
         $queryParams = $request->getQueryParams();
         $type = $queryParams['type'] ?? 'all';
 
-        $flaggedContent = $this->moderationService->getFlaggedContent();
-
-        return $this->render($response, 'moderation/flagged', [
-            'title' => 'Flagged Content | Lobsters',
-            'type' => $type,
-            'flagged_stories' => $flaggedContent['stories'],
-            'flagged_comments' => $flaggedContent['comments']
-        ]);
+        try {
+            $flaggedContent = $this->moderationService->getFlaggedContent();
+            
+            return $this->render($response, 'moderation/flagged', [
+                'title' => 'Flagged Content | Lobsters',
+                'type' => $type,
+                'flagged_stories' => $flaggedContent['stories'] ?? [],
+                'flagged_comments' => $flaggedContent['comments'] ?? []
+            ]);
+        } catch (\Exception $e) {
+            // If there's an error, return a simple error page
+            return $this->render($response, 'moderation/flagged', [
+                'title' => 'Flagged Content | Lobsters',
+                'type' => $type,
+                'flagged_stories' => [],
+                'flagged_comments' => [],
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     public function moderateStory(Request $request, Response $response, array $args): Response
@@ -240,18 +252,5 @@ class ModerationController extends BaseController
             'available_subject_types' => $subjectTypes
         ]);
     }
-
-    private function requireModerator(): bool
-    {
-        if (!isset($_SESSION['user_id'])) {
-            return false;
-        }
-
-        try {
-            $user = \App\Models\User::find($_SESSION['user_id']);
-            return $user && $this->moderationService->isUserModerator($user);
-        } catch (\Exception $e) {
-            return false;
-        }
-    }
 }
+

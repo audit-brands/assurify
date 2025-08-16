@@ -64,6 +64,8 @@ class AuthController extends BaseController
             // Set session
             $_SESSION['user_id'] = $user->id;
             $_SESSION['username'] = $user->username;
+            $_SESSION['is_admin'] = $user->is_admin ?? false;
+            $_SESSION['is_moderator'] = $user->is_moderator ?? false;
 
             // Set remember me cookie if requested
             if ($rememberMe) {

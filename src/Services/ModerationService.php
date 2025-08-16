@@ -82,34 +82,6 @@ class ModerationService
         ];
     }
 
-    public function getModerationStats(): array
-    {
-        try {
-            $stats = [
-                'total_stories' => Story::count(),
-                'total_comments' => Comment::where('is_deleted', false)->count(),
-                'flagged_stories' => Story::where('is_flagged', true)->count(),
-                'flagged_comments' => Comment::where('flags', '>', 0)->where('is_deleted', false)->count(),
-                'low_score_stories' => Story::where('score', '<', -3)->count(),
-                'low_score_comments' => Comment::where('score', '<', -3)->where('is_deleted', false)->count(),
-                'total_users' => User::count(),
-                'banned_users' => User::where('banned_at', '!=', null)->count(),
-            ];
-        } catch (\Exception $e) {
-            $stats = [
-                'total_stories' => 0,
-                'total_comments' => 0,
-                'flagged_stories' => 0,
-                'flagged_comments' => 0,
-                'low_score_stories' => 0,
-                'low_score_comments' => 0,
-                'total_users' => 0,
-                'banned_users' => 0,
-            ];
-        }
-
-        return $stats;
-    }
 
     public function moderateStory(int $storyId, string $action, User $moderator, ?string $reason = null): bool
     {
@@ -249,11 +221,6 @@ class ModerationService
         }
     }
 
-    public function getModerationLog(int $page = 1, int $perPage = 50): array
-    {
-        // For now, return empty array - in real implementation would query moderation_log table
-        return [];
-    }
 
     public function getTotalModerationCount(): int
     {
@@ -279,8 +246,88 @@ class ModerationService
         return $user->is_admin ?? false;
     }
 
-    private function timeAgo(\DateTime $date): string
+    public function getModerationStats(): array
     {
+        try {
+            $totalStories = Story::count();
+            $totalComments = Comment::count();
+            $totalUsers = User::count();
+            
+            $flaggedStoriesCount = Story::where('score', '<', -5)
+                ->orWhere('is_flagged', true)
+                ->count();
+            
+            $flaggedCommentsCount = Comment::where('score', '<', -5)
+                ->orWhere('flags', '>', 0)
+                ->where('is_deleted', false)
+                ->count();
+            
+            $lowScoreStories = Story::where('score', '<', -5)->count();
+            $lowScoreComments = Comment::where('score', '<', -5)->count();
+            
+            $bannedUsersCount = User::whereNotNull('banned_at')->count();
+            
+            return [
+                'total_stories' => $totalStories,
+                'total_comments' => $totalComments,
+                'total_users' => $totalUsers,
+                'flagged_stories' => $flaggedStoriesCount,
+                'flagged_comments' => $flaggedCommentsCount,
+                'low_score_stories' => $lowScoreStories,
+                'low_score_comments' => $lowScoreComments,
+                'banned_users' => $bannedUsersCount,
+                'total_flagged' => $flaggedStoriesCount + $flaggedCommentsCount
+            ];
+        } catch (\Exception $e) {
+            return [
+                'total_stories' => 0,
+                'total_comments' => 0,
+                'total_users' => 0,
+                'flagged_stories' => 0,
+                'flagged_comments' => 0,
+                'low_score_stories' => 0,
+                'low_score_comments' => 0,
+                'banned_users' => 0,
+                'total_flagged' => 0
+            ];
+        }
+    }
+
+    public function getModerationLog(int $limit = 20): array
+    {
+        try {
+            return \App\Models\Moderation::with(['moderator'])
+                ->orderBy('created_at', 'desc')
+                ->limit($limit)
+                ->get()
+                ->map(function ($moderation) {
+                    return [
+                        'id' => $moderation->id,
+                        'action' => $moderation->action,
+                        'reason' => $moderation->reason,
+                        'subject_type' => $moderation->subject_type,
+                        'subject_title' => $moderation->subject_title,
+                        'moderator' => $moderation->moderator->username ?? 'System',
+                        'created_at' => $moderation->created_at,
+                        'time_ago' => $this->timeAgo($moderation->created_at),
+                        'ip_address' => $moderation->ip_address
+                    ];
+                })->toArray();
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    private function timeAgo($date): string
+    {
+        // Handle different date input types
+        if (is_string($date)) {
+            $date = new \DateTime($date);
+        } elseif (!$date instanceof \DateTime) {
+            // Handle Carbon dates or other date types
+            $date = new \DateTime($date);
+        }
+        
         $now = new \DateTime();
         $diff = $now->diff($date);
 
